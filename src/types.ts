@@ -180,6 +180,33 @@ export interface MagicBallTask {
   updatedAt: string;
 }
 
+// ---------------- Rocket / Fighter config ----------------
+
+export interface RocketLevel {
+  level: number;
+  energyRequired: number;
+  top1Coins: number;
+  top2Coins: number;
+  top3Coins: number;
+  randomPoolCoins: number;
+  randomBeneficiaries: number;
+  assetUrl: string;
+  iconUrl: string;
+}
+
+export interface RocketConfig {
+  id: string;
+  key: 'singleton';
+  enabled: boolean;
+  timezone: string;
+  /** Min energy a top-3 contributor must hit to qualify for the fixed reward. */
+  topContributionThreshold: number;
+  launchCountdownSeconds: number;
+  levels: RocketLevel[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ---------------- Lucky Bag config ----------------
 
 export interface LuckyBagTier {
