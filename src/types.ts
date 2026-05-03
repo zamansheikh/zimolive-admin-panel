@@ -698,3 +698,122 @@ export interface PaginatedList<T> {
   limit: number;
   total: number;
 }
+
+// ---------------- Rooms ----------------
+
+export type RoomStatus = 'active' | 'closed' | 'removed';
+export type RoomKind = 'audio' | 'video';
+export type RoomMemberRole = 'owner' | 'admin' | 'member';
+
+/// Lightweight summary used by the admin rooms-list table. The list
+/// endpoint populates `ownerId` with a small subset of user fields so
+/// the row can render the owner's name + flag without a second hop.
+export interface AdminRoomSummary {
+  id: string;
+  numericId?: number;
+  name: string;
+  coverUrl: string;
+  ownerCountry: string;
+  status: RoomStatus;
+  kind: RoomKind;
+  micCount: number;
+  viewerCount: number;
+  liveAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  removedReason?: string;
+  removedBy?: string | null;
+  ownerId:
+    | string
+    | {
+        id?: string;
+        _id?: string;
+        username?: string;
+        displayName?: string;
+        avatarUrl?: string;
+        numericId?: number;
+        country?: string;
+      };
+}
+
+/// Lightweight populated-user shape that the snapshot endpoint embeds
+/// on seat / member rows via Mongoose populate. `id` lands via the
+/// User toJSON transform; the other fields are the explicit populate
+/// projection. Use the helper `resolvePopulatedUser` below to get a
+/// safe display object — `userId` may also arrive as a raw string id
+/// (populate failed / user deleted) so callers must defend against it.
+export interface PopulatedRoomUser {
+  id: string;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  numericId?: number;
+  level?: number;
+  isHost?: boolean;
+  /** Set on the snapshot's `owner` field (admins want to see the
+   *  owner's country at a glance). Not always populated on seat /
+   *  member rows — those use a leaner projection. Treat as optional. */
+  country?: string;
+}
+
+/// Full snapshot returned by `GET /admin/rooms/:id`. Seats and members
+/// each carry a `userId` field — Mongoose populates it inline with a
+/// `PopulatedRoomUser` when the user record exists, but a deleted /
+/// missing user falls back to the raw ObjectId string. Frontend code
+/// must handle both, OR the populated user being `null` for empty
+/// seats. The detail page does this via the helper below.
+export interface AdminRoomSnapshot {
+  room: AdminRoomSummary & {
+    announcement?: string;
+    blockedUserIds?: string[];
+    adminUserIds?: string[];
+    kickHistory?: Array<{
+      userId: string;
+      byUserId: string;
+      reason: string;
+      at: string;
+    }>;
+  };
+  owner: PopulatedRoomUser | null;
+  seats: Array<{
+    id: string;
+    seatIndex: number;
+    locked: boolean;
+    muted: boolean;
+    /** null = empty seat. Populated user when occupied. May fall back
+     *  to a raw id string if populate failed (user deleted). */
+    userId: PopulatedRoomUser | string | null;
+    joinedAt: string | null;
+  }>;
+  members: Array<{
+    id: string;
+    role: RoomMemberRole;
+    joinedAt: string;
+    /** Populated user when the referenced user still exists. May be a
+     *  raw id string (populate skipped) or `null` (referenced user was
+     *  deleted, leaving an orphan presence row). The detail page
+     *  handles all three via `resolvePopulatedUser`. */
+    userId: PopulatedRoomUser | string | null;
+  }>;
+  channelName: string;
+  seatDiamonds?: Record<string, number>;
+}
+
+/// Coerce the polymorphic `userId` field into a stable display shape.
+/// Returns `null` for empty seats; for raw-string fallbacks (populate
+/// failed) returns a minimal shape so the UI shows the id rather than
+/// crashing. Use everywhere a snapshot row is rendered.
+export function resolvePopulatedUser(
+  raw: PopulatedRoomUser | string | null | undefined,
+): { label: string; numericId: string | null; avatarUrl: string; id: string } | null {
+  if (raw == null) return null;
+  if (typeof raw === 'string') {
+    return { label: raw, numericId: null, avatarUrl: '', id: raw };
+  }
+  return {
+    label: raw.displayName || raw.username || raw.id,
+    numericId: raw.numericId != null ? String(raw.numericId) : null,
+    avatarUrl: raw.avatarUrl ?? '',
+    id: raw.id,
+  };
+}

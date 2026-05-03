@@ -37,6 +37,7 @@ const SECTIONS: NavSection[] = [
       { href: '/users', label: 'App Users', permission: 'users.view', icon: '◯' },
       { href: '/agencies', label: 'Agencies', permission: 'agency.view', icon: '◈' },
       { href: '/families', label: 'Families', permission: 'family.view', icon: '✦' },
+      { href: '/rooms', label: 'Rooms', permission: 'rooms.view', icon: '◐' },
       { href: '/resellers', label: 'Resellers', permission: 'reseller.view', icon: '◇' },
     ],
   },
