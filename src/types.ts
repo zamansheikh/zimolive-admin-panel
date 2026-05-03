@@ -220,6 +220,8 @@ export interface LuckyBagTier {
   percentages: number[];
 }
 
+export type LuckyBagDistributionMode = 'random' | 'fixed_tier';
+
 export interface LuckyBagConfig {
   id: string;
   key: 'singleton';
@@ -229,6 +231,13 @@ export interface LuckyBagConfig {
   applyCommissionByDefault: boolean;
   coinPresets: number[];
   tiers: LuckyBagTier[];
+  /** When true, mobile shows the distribution-mode picker and the user
+   *  chooses random vs fixed-tier. When false, the picker is hidden and
+   *  the server forces `composerDefaultDistributionMode`. */
+  composerShowDistributionMode: boolean;
+  /** The mode the server uses when the picker is hidden, AND the
+   *  pre-selected mode shown when it's visible. */
+  composerDefaultDistributionMode: LuckyBagDistributionMode;
   createdAt: string;
   updatedAt: string;
 }

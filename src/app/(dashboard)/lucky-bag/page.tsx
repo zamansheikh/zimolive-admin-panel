@@ -14,7 +14,11 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { authStorage, hasPermission } from '@/lib/auth';
-import type { LuckyBagConfig, LuckyBagTier } from '@/types';
+import type {
+  LuckyBagConfig,
+  LuckyBagDistributionMode,
+  LuckyBagTier,
+} from '@/types';
 
 /**
  * Single-page Lucky Bag config — the whole admin surface for this
@@ -38,6 +42,9 @@ export default function LuckyBagAdminPage() {
   const [applyByDefault, setApplyByDefault] = useState(true);
   const [coinPresetsRaw, setCoinPresetsRaw] = useState('');
   const [tiers, setTiers] = useState<LuckyBagTier[]>([]);
+  const [showPicker, setShowPicker] = useState(true);
+  const [defaultMode, setDefaultMode] =
+    useState<LuckyBagDistributionMode>('random');
 
   function hydrateForm(c: LuckyBagConfig) {
     setEnabled(c.enabled);
@@ -45,6 +52,8 @@ export default function LuckyBagAdminPage() {
     setApplyByDefault(c.applyCommissionByDefault);
     setCoinPresetsRaw(c.coinPresets.join(','));
     setTiers(c.tiers.map((t) => ({ ...t, percentages: [...t.percentages] })));
+    setShowPicker(c.composerShowDistributionMode ?? true);
+    setDefaultMode(c.composerDefaultDistributionMode ?? 'random');
   }
 
   useEffect(() => {
@@ -114,6 +123,8 @@ export default function LuckyBagAdminPage() {
             applyCommissionByDefault: applyByDefault,
             coinPresets,
             tiers,
+            composerShowDistributionMode: showPicker,
+            composerDefaultDistributionMode: defaultMode,
           }),
         },
       );
@@ -272,6 +283,39 @@ export default function LuckyBagAdminPage() {
             disabled={!canManage}
           />
         </Field>
+      </Card>
+
+      <Card className="mb-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            label="Show distribution picker in app"
+            hint="When off, the mobile composer hides the random/fixed-tier toggle. The server forces the default below regardless of what the client sends."
+          >
+            <Select
+              value={showPicker ? 'true' : 'false'}
+              onChange={(e) => setShowPicker(e.target.value === 'true')}
+              disabled={!canManage}
+            >
+              <option value="true">Show — user chooses</option>
+              <option value="false">Hide — admin forces below</option>
+            </Select>
+          </Field>
+          <Field
+            label="Default distribution mode"
+            hint="Used as the forced mode when the picker is hidden, and as the pre-selected option when it's shown."
+          >
+            <Select
+              value={defaultMode}
+              onChange={(e) =>
+                setDefaultMode(e.target.value as LuckyBagDistributionMode)
+              }
+              disabled={!canManage}
+            >
+              <option value="random">Random</option>
+              <option value="fixed_tier">Fixed Tier</option>
+            </Select>
+          </Field>
+        </div>
       </Card>
 
       <div className="mb-3 flex items-center justify-between">
