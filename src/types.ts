@@ -714,6 +714,8 @@ export type HonorSource =
   | 'event'
   | 'purchase';
 
+export type HonorAssetType = 'image' | 'svga';
+
 /// Catalog row — one badge admins can grant to users.
 export interface HonorItem {
   id: string;
@@ -725,6 +727,9 @@ export interface HonorItem {
   category: HonorCategory;
   iconUrl: string;
   iconPublicId: string;
+  /** Whether the icon is a static image or an SVGA animation —
+   *  drives the mobile renderer (CachedNetworkImage vs SVGAEasyPlayer). */
+  iconAssetType: HonorAssetType;
   /** Max upgrade tier — 1..5 stars in the UI. */
   maxTier: number;
   sortOrder: number;

@@ -19,6 +19,7 @@ import {
 import { api } from '@/lib/api';
 import { authStorage, hasPermission } from '@/lib/auth';
 import type {
+  HonorAssetType,
   HonorCategory,
   HonorItem,
   PaginatedList,
@@ -257,11 +258,50 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
     editing?.category ?? 'medal',
   );
   const [iconUrl, setIconUrl] = useState(editing?.iconUrl ?? '');
+  const [iconPublicId, setIconPublicId] = useState(
+    editing?.iconPublicId ?? '',
+  );
+  const [iconAssetType, setIconAssetType] = useState<HonorAssetType>(
+    editing?.iconAssetType ?? 'image',
+  );
   const [maxTier, setMaxTier] = useState(String(editing?.maxTier ?? 5));
   const [sortOrder, setSortOrder] = useState(String(editing?.sortOrder ?? 0));
   const [active, setActive] = useState(editing?.active ?? true);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  /// Generic upload helper. The backend has two endpoints — image
+  /// vs. SVGA — because Cloudinary needs different `resource_type`
+  /// values for each. We pick the endpoint by the `kind` arg and let
+  /// the server validate the mime/extension.
+  async function uploadIcon(file: File, kind: HonorAssetType) {
+    setUploading(true);
+    setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const path =
+        kind === 'svga'
+          ? '/admin/honors/upload/svga'
+          : '/admin/honors/upload/icon';
+      const res = await api<{
+        url: string;
+        publicId: string;
+        assetType: HonorAssetType;
+      }>(path, {
+        method: 'POST',
+        body: fd,
+      });
+      setIconUrl(res.url);
+      setIconPublicId(res.publicId);
+      setIconAssetType(res.assetType);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function save() {
     setBusy(true);
@@ -275,6 +315,8 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
         description: description.trim(),
         category,
         iconUrl: iconUrl.trim(),
+        iconPublicId: iconPublicId.trim(),
+        iconAssetType,
         maxTier: Number(maxTier) || 5,
         sortOrder: Number(sortOrder) || 0,
         active,
@@ -389,13 +431,77 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600">
-              Icon URL
+              Icon
             </label>
-            <Input
-              value={iconUrl}
-              onChange={(e) => setIconUrl(e.target.value)}
-              placeholder="https://res.cloudinary.com/…/charm_star.png"
-            />
+            <div className="mt-1 flex items-center gap-3">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50">
+                {iconUrl ? (
+                  iconAssetType === 'svga' ? (
+                    // Browsers can't preview .svga inline, so we
+                    // surface the asset-type badge and a link.
+                    <a
+                      href={iconUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] font-bold text-brand"
+                    >
+                      SVGA
+                    </a>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={iconUrl}
+                      alt=""
+                      className="h-full w-full object-contain"
+                    />
+                  )
+                ) : (
+                  <span className="text-amber-500">✦</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <label
+                    className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                      uploading ? 'pointer-events-none opacity-60' : ''
+                    }`}
+                  >
+                    {uploading ? 'Uploading…' : 'Upload image'}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadIcon(file, 'image');
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  <label
+                    className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                      uploading ? 'pointer-events-none opacity-60' : ''
+                    }`}
+                  >
+                    {uploading ? 'Uploading…' : 'Upload SVGA'}
+                    <input
+                      type="file"
+                      accept=".svga"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadIcon(file, 'svga');
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  Type: <b>{iconAssetType}</b>
+                  {iconUrl && ' · saved on Cloudinary'}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         {err && (
