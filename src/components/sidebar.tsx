@@ -53,6 +53,7 @@ const SECTIONS: NavSection[] = [
   {
     label: 'Engagement',
     items: [
+      { href: '/honors', label: 'Honors', permission: 'honors.view', icon: '★' },
       { href: '/banners', label: 'Home Banners', permission: 'banners.view', icon: '▭' },
       { href: '/splash', label: 'Splash Banners', permission: 'banners.view', icon: '▣' },
       { href: '/room-banners', label: 'Room Banners', permission: 'banners.view', icon: '▥' },

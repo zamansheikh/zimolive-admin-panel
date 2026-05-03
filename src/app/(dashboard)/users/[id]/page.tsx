@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { Badge, Button, Card, ErrorAlert, Field, Input, PageHeader, Select } from '@/components/ui';
 import WalletCard from '@/components/wallet-card';
+import HonorsPanel from '@/components/honors-panel';
 import { api } from '@/lib/api';
 import { authStorage, hasPermission } from '@/lib/auth';
 import type { AdminRole, Agency, AppUser, PaginatedList, Reseller } from '@/types';
@@ -242,6 +243,10 @@ export default function UserDetailPage() {
             )}
           </Card>
         )}
+      </div>
+
+      <div className="mt-6">
+        <HonorsPanel userId={user.id} />
       </div>
     </div>
   );

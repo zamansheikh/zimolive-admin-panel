@@ -699,6 +699,53 @@ export interface PaginatedList<T> {
   total: number;
 }
 
+// ---------------- Honors / Achievements ----------------
+
+export type HonorCategory =
+  | 'medal'
+  | 'charm'
+  | 'wealth'
+  | 'event'
+  | 'special';
+
+export type HonorSource =
+  | 'admin_grant'
+  | 'task'
+  | 'event'
+  | 'purchase';
+
+/// Catalog row — one badge admins can grant to users.
+export interface HonorItem {
+  id: string;
+  /** Stable machine key — `charm_star`, `lv8`, etc. Used by the
+   *  task system to award without coupling to display names. */
+  key: string;
+  name: string;
+  description: string;
+  category: HonorCategory;
+  iconUrl: string;
+  iconPublicId: string;
+  /** Max upgrade tier — 1..5 stars in the UI. */
+  maxTier: number;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/// Per-user inventory row, returned by the admin "list user honors"
+/// endpoint. The catalog row is partially hydrated for display.
+export interface UserHonor {
+  id: string;
+  userId: string;
+  honorItemId: string;
+  tier: number;
+  source: HonorSource;
+  awardedBy?: string | null;
+  note: string;
+  awardedAt: string;
+}
+
 // ---------------- Rooms ----------------
 
 export type RoomStatus = 'active' | 'closed' | 'removed';
