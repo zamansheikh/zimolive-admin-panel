@@ -34,7 +34,8 @@ export default function RocketAdminPage() {
   const [enabled, setEnabled] = useState(true);
   const [timezone, setTimezone] = useState('Asia/Dhaka');
   const [thresholdRaw, setThresholdRaw] = useState('120000');
-  const [countdownRaw, setCountdownRaw] = useState('10');
+  const [countdownRaw, setCountdownRaw] = useState('20');
+  const [cascadeRaw, setCascadeRaw] = useState('30');
   const [levels, setLevels] = useState<RocketLevel[]>([]);
 
   function hydrateForm(c: RocketConfig) {
@@ -42,6 +43,7 @@ export default function RocketAdminPage() {
     setTimezone(c.timezone);
     setThresholdRaw(String(c.topContributionThreshold));
     setCountdownRaw(String(c.launchCountdownSeconds));
+    setCascadeRaw(String(c.cascadeDelaySeconds ?? 30));
     setLevels(c.levels.map((l) => ({ ...l })));
   }
 
@@ -103,8 +105,13 @@ export default function RocketAdminPage() {
       return;
     }
     const countdown = parseInt(countdownRaw, 10);
-    if (!Number.isFinite(countdown) || countdown < 1 || countdown > 60) {
-      setError('Launch countdown must be 1–60 seconds.');
+    if (!Number.isFinite(countdown) || countdown < 1 || countdown > 120) {
+      setError('Launch countdown must be 1–120 seconds.');
+      return;
+    }
+    const cascade = parseInt(cascadeRaw, 10);
+    if (!Number.isFinite(cascade) || cascade < 5 || cascade > 300) {
+      setError('Cascade delay must be 5–300 seconds.');
       return;
     }
     const seen = new Set<number>();
@@ -131,6 +138,7 @@ export default function RocketAdminPage() {
             timezone,
             topContributionThreshold: threshold,
             launchCountdownSeconds: countdown,
+            cascadeDelaySeconds: cascade,
             levels,
           }),
         },
@@ -160,7 +168,7 @@ export default function RocketAdminPage() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Rocket / Fighter — Config"
-        subtitle="Per-level energy thresholds and reward ladder for the in-room fighter. Energy fills as users gift in the room (1 coin = 1 energy); when the level fills, a 10s countdown plays globally and the rewards distribute on launch."
+        subtitle="Per-level energy thresholds and reward ladder for the in-room fighter. Energy fills as users gift in the room (1 coin = 1 energy); when a level fills, a global banner plays and the rocket launches after the configured countdown. Single big gifts that cross multiple thresholds chain rockets back-to-back with the cascade delay between them."
         actions={
           <>
             <Button
@@ -189,7 +197,7 @@ export default function RocketAdminPage() {
       )}
 
       <Card className="mb-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Feature enabled">
             <Select
               value={enabled ? 'true' : 'false'}
@@ -221,14 +229,27 @@ export default function RocketAdminPage() {
           </Field>
           <Field
             label="Launch countdown (s)"
-            hint="Seconds between energy-full and the actual launch. 1–60."
+            hint="Seconds between threshold-cross and launch. Long enough for the global banner to pull users in. 1–120."
           >
             <Input
               type="number"
               min="1"
-              max="60"
+              max="120"
               value={countdownRaw}
               onChange={(e) => setCountdownRaw(e.target.value)}
+              disabled={!canManage}
+            />
+          </Field>
+          <Field
+            label="Cascade delay (s)"
+            hint="Spacing between back-to-back launches when one big gift fills multiple levels. 5–300."
+          >
+            <Input
+              type="number"
+              min="5"
+              max="300"
+              value={cascadeRaw}
+              onChange={(e) => setCascadeRaw(e.target.value)}
               disabled={!canManage}
             />
           </Field>

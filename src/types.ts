@@ -201,7 +201,12 @@ export interface RocketConfig {
   timezone: string;
   /** Min energy a top-3 contributor must hit to qualify for the fixed reward. */
   topContributionThreshold: number;
+  /** Seconds between threshold-cross and the actual launch — long enough for
+   *  users in other rooms to see the global banner and hop in. */
   launchCountdownSeconds: number;
+  /** Seconds between two cascading launches when a single big gift fills
+   *  multiple levels at once. */
+  cascadeDelaySeconds: number;
   levels: RocketLevel[];
   createdAt: string;
   updatedAt: string;
