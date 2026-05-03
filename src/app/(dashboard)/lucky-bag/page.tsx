@@ -45,6 +45,9 @@ export default function LuckyBagAdminPage() {
   const [showPicker, setShowPicker] = useState(true);
   const [defaultMode, setDefaultMode] =
     useState<LuckyBagDistributionMode>('random');
+  const [openCountdownRaw, setOpenCountdownRaw] = useState('30');
+  const [claimWindowRaw, setClaimWindowRaw] = useState('30');
+  const [maxConcurrentRaw, setMaxConcurrentRaw] = useState('1');
 
   function hydrateForm(c: LuckyBagConfig) {
     setEnabled(c.enabled);
@@ -54,6 +57,9 @@ export default function LuckyBagAdminPage() {
     setTiers(c.tiers.map((t) => ({ ...t, percentages: [...t.percentages] })));
     setShowPicker(c.composerShowDistributionMode ?? true);
     setDefaultMode(c.composerDefaultDistributionMode ?? 'random');
+    setOpenCountdownRaw(String(c.openCountdownSeconds ?? 30));
+    setClaimWindowRaw(String(c.claimWindowSeconds ?? 30));
+    setMaxConcurrentRaw(String(c.maxConcurrentPerRoom ?? 1));
   }
 
   useEffect(() => {
@@ -110,6 +116,21 @@ export default function LuckyBagAdminPage() {
         return;
       }
     }
+    const openCountdown = parseInt(openCountdownRaw, 10);
+    if (!Number.isFinite(openCountdown) || openCountdown < 1 || openCountdown > 300) {
+      setError('Open countdown must be 1–300 seconds.');
+      return;
+    }
+    const claimWindow = parseInt(claimWindowRaw, 10);
+    if (!Number.isFinite(claimWindow) || claimWindow < 5 || claimWindow > 600) {
+      setError('Claim window must be 5–600 seconds.');
+      return;
+    }
+    const maxConcurrent = parseInt(maxConcurrentRaw, 10);
+    if (!Number.isFinite(maxConcurrent) || maxConcurrent < 1 || maxConcurrent > 10) {
+      setError('Max concurrent bags must be 1–10.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -125,6 +146,9 @@ export default function LuckyBagAdminPage() {
             tiers,
             composerShowDistributionMode: showPicker,
             composerDefaultDistributionMode: defaultMode,
+            openCountdownSeconds: openCountdown,
+            claimWindowSeconds: claimWindow,
+            maxConcurrentPerRoom: maxConcurrent,
           }),
         },
       );
@@ -314,6 +338,50 @@ export default function LuckyBagAdminPage() {
               <option value="random">Random</option>
               <option value="fixed_tier">Fixed Tier</option>
             </Select>
+          </Field>
+        </div>
+      </Card>
+
+      <Card className="mb-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field
+            label="Open countdown (sec)"
+            hint="Seconds before the open button becomes tappable on a freshly-dropped bag. 1–300."
+          >
+            <Input
+              type="number"
+              min="1"
+              max="300"
+              value={openCountdownRaw}
+              onChange={(e) => setOpenCountdownRaw(e.target.value)}
+              disabled={!canManage}
+            />
+          </Field>
+          <Field
+            label="Claim window (sec)"
+            hint="How long the bag stays claimable AFTER the open button appears. After this elapses without a claim, the bag vanishes. 5–600."
+          >
+            <Input
+              type="number"
+              min="5"
+              max="600"
+              value={claimWindowRaw}
+              onChange={(e) => setClaimWindowRaw(e.target.value)}
+              disabled={!canManage}
+            />
+          </Field>
+          <Field
+            label="Max active per room"
+            hint="Limit on concurrent bags in flight in the same room. Default 1 — only one active bag at a time."
+          >
+            <Input
+              type="number"
+              min="1"
+              max="10"
+              value={maxConcurrentRaw}
+              onChange={(e) => setMaxConcurrentRaw(e.target.value)}
+              disabled={!canManage}
+            />
           </Field>
         </div>
       </Card>

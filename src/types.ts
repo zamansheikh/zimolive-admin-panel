@@ -238,6 +238,12 @@ export interface LuckyBagConfig {
   /** The mode the server uses when the picker is hidden, AND the
    *  pre-selected mode shown when it's visible. */
   composerDefaultDistributionMode: LuckyBagDistributionMode;
+  /** Seconds until the open button appears on a freshly-dropped bag. */
+  openCountdownSeconds: number;
+  /** Seconds the bag stays claimable AFTER the open button appears. */
+  claimWindowSeconds: number;
+  /** Hard cap on simultaneous active bags per room. Default 1. */
+  maxConcurrentPerRoom: number;
   createdAt: string;
   updatedAt: string;
 }
