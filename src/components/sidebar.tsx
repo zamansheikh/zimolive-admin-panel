@@ -57,6 +57,7 @@ const SECTIONS: NavSection[] = [
       { href: '/banners', label: 'Home Banners', permission: 'banners.view', icon: '▭' },
       { href: '/splash', label: 'Splash Banners', permission: 'banners.view', icon: '▣' },
       { href: '/room-banners', label: 'Room Banners', permission: 'banners.view', icon: '▥' },
+      { href: '/room-emojis', label: 'Room Emojis', permission: 'vip.view', icon: '☺' },
       { href: '/daily-reward', label: 'Daily Reward', permission: 'daily_reward.view', icon: '✓' },
       { href: '/magic-ball', label: 'Magic Ball', permission: 'magic_ball.view', icon: '◉' },
       { href: '/lucky-bag', label: 'Lucky Bag', permission: 'lucky_bag.view', icon: '◈' },

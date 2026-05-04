@@ -564,6 +564,38 @@ export interface RoomBanner {
   updatedAt: string;
 }
 
+// ---------------- Room Emojis ----------------
+
+/**
+ * One catalog entry for the seat-emoji picker. Three render types:
+ *   • `char`  — raw unicode (no asset upload).
+ *   • `image` — static image URL (PNG / WEBP / GIF).
+ *   • `svga`  — animated SVGA URL (uses raw resource type on
+ *                Cloudinary, played through SVGAEasyPlayer on mobile).
+ *
+ * `durationMs` controls how long the reaction stays on the seat
+ * overlay; admins tune visibility centrally so we don't have to ship
+ * an app update to slow / speed reactions across the board.
+ */
+export type RoomEmojiType = 'char' | 'image' | 'svga';
+
+export interface RoomEmoji {
+  id: string;
+  name: string;
+  category: string;
+  type: RoomEmojiType;
+  /** URL when type is 'image' or 'svga'. Empty for 'char'. */
+  assetUrl: string;
+  assetPublicId: string;
+  /** Raw unicode character(s) for 'char' type. Empty otherwise. */
+  char: string;
+  durationMs: number;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ---------------- Daily Reward ----------------
 
 export type RewardKind = 'coin' | 'cosmetic';
