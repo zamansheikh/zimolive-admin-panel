@@ -738,11 +738,28 @@ export interface PaginatedList<T> {
 // ---------------- Honors / Achievements ----------------
 
 export type HonorCategory =
+  // New canonical buckets (drives the Honor Wall tab strip on mobile).
+  | 'fortune'
+  | 'connection'
+  | 'gift'
+  | 'experience'
+  | 'constellation'
+  | 'special'
+  // Legacy values — kept so old rows still parse / save.
   | 'medal'
   | 'charm'
   | 'wealth'
-  | 'event'
-  | 'special';
+  | 'event';
+
+/// Per-tier definition: each level of an honor has its own art,
+/// target the user has to hit, and reward text shown in the detail
+/// card. The first tier is the unlock; later tiers are upgrades.
+export interface HonorTier {
+  name: string;
+  iconUrl: string;
+  target: number;
+  rewardText: string;
+}
 
 export type HonorSource =
   | 'admin_grant'
@@ -766,8 +783,11 @@ export interface HonorItem {
   /** Whether the icon is a static image or an SVGA animation —
    *  drives the mobile renderer (CachedNetworkImage vs SVGAEasyPlayer). */
   iconAssetType: HonorAssetType;
-  /** Max upgrade tier — 1..5 stars in the UI. */
+  /** Max upgrade tier — 1..10 stars in the UI. Derived from
+   *  `tiers.length` when tiers are configured. */
   maxTier: number;
+  /** Per-tier definitions — names, art, targets, reward text. */
+  tiers: HonorTier[];
   sortOrder: number;
   active: boolean;
   createdAt: string;

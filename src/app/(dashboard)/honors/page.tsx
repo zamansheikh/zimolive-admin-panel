@@ -22,22 +22,31 @@ import type {
   HonorAssetType,
   HonorCategory,
   HonorItem,
+  HonorTier,
   PaginatedList,
 } from '@/types';
 
 const CATEGORY_TONE: Record<HonorCategory, 'green' | 'amber' | 'red' | 'brand' | 'slate'> = {
+  // New canonical buckets — picked to match the mobile tab strip.
+  fortune: 'amber',
+  connection: 'brand',
+  gift: 'red',
+  experience: 'green',
+  constellation: 'brand',
+  special: 'slate',
+  // Legacy fallbacks.
   medal: 'amber',
   charm: 'brand',
   wealth: 'green',
   event: 'red',
-  special: 'slate',
 };
 
 const CATEGORY_OPTIONS: { value: HonorCategory; label: string }[] = [
-  { value: 'medal', label: 'Medal' },
-  { value: 'charm', label: 'Charm' },
-  { value: 'wealth', label: 'Wealth' },
-  { value: 'event', label: 'Event' },
+  { value: 'fortune', label: 'Fortune' },
+  { value: 'connection', label: 'Connection' },
+  { value: 'gift', label: 'Gift' },
+  { value: 'experience', label: 'Experience' },
+  { value: 'constellation', label: 'Constellation' },
   { value: 'special', label: 'Special' },
 ];
 
@@ -255,7 +264,7 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
   const [name, setName] = useState(editing?.name ?? '');
   const [description, setDescription] = useState(editing?.description ?? '');
   const [category, setCategory] = useState<HonorCategory>(
-    editing?.category ?? 'medal',
+    editing?.category ?? 'fortune',
   );
   const [iconUrl, setIconUrl] = useState(editing?.iconUrl ?? '');
   const [iconPublicId, setIconPublicId] = useState(
@@ -264,7 +273,12 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
   const [iconAssetType, setIconAssetType] = useState<HonorAssetType>(
     editing?.iconAssetType ?? 'image',
   );
-  const [maxTier, setMaxTier] = useState(String(editing?.maxTier ?? 5));
+  // Per-tier rows — each carries its own art + target + reward
+  // text. Order = tier order: index 0 is Lv.1, index 1 is Lv.2, etc.
+  // `maxTier` is derived from this array's length on save.
+  const [tiers, setTiers] = useState<HonorTier[]>(
+    () => editing?.tiers ?? [],
+  );
   const [sortOrder, setSortOrder] = useState(String(editing?.sortOrder ?? 0));
   const [active, setActive] = useState(editing?.active ?? true);
   const [busy, setBusy] = useState(false);
@@ -307,6 +321,16 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
     setBusy(true);
     setErr(null);
     try {
+      // Sanitise tier rows — drop any with an empty name (admins
+      // sometimes click "+ Add tier" and don't fill it in).
+      const cleanTiers = tiers
+        .map((t) => ({
+          name: t.name.trim(),
+          iconUrl: t.iconUrl.trim(),
+          target: Number(t.target) || 0,
+          rewardText: t.rewardText.trim(),
+        }))
+        .filter((t) => t.name.length > 0);
       const body = {
         // Key is immutable on edit (admins shouldn't break the
         // task-system's stable handle to a row).
@@ -317,7 +341,11 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
         iconUrl: iconUrl.trim(),
         iconPublicId: iconPublicId.trim(),
         iconAssetType,
-        maxTier: Number(maxTier) || 5,
+        // Backend derives maxTier from tiers.length when tiers
+        // are supplied; keep maxTier ≥ 1 for legacy rows that
+        // never set tiers.
+        maxTier: cleanTiers.length > 0 ? cleanTiers.length : 5,
+        tiers: cleanTiers,
         sortOrder: Number(sortOrder) || 0,
         active,
       };
@@ -396,20 +424,6 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-600">
-                Max tier (1–5)
-              </label>
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                value={maxTier}
-                onChange={(e) => setMaxTier(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-600">
                 Sort order
               </label>
               <Input
@@ -418,17 +432,21 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
                 onChange={(e) => setSortOrder(e.target.value)}
               />
             </div>
-            <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(e) => setActive(e.target.checked)}
-                />
-                Active
-              </label>
-            </div>
           </div>
+          <div className="flex items-center pb-1">
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+              />
+              Active
+            </label>
+          </div>
+
+          {/* Per-tier editor. Each row is one level (Lv.1, Lv.2, …) */}
+          <_TiersEditor tiers={tiers} onChange={setTiers} />
+
           <div>
             <label className="text-xs font-semibold text-slate-600">
               Icon
@@ -526,6 +544,204 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
           </Button>
         </div>
       </Card>
+    </div>
+  );
+}
+
+interface TiersEditorProps {
+  tiers: HonorTier[];
+  onChange: (next: HonorTier[]) => void;
+}
+
+/// Dynamic per-tier editor. Admins build up the level ladder one row
+/// at a time — each tier carries its own art (different visual at
+/// Lv.1 vs Lv.5), the numeric target the user has to hit, and the
+/// reward text shown on the medal detail sheet.
+function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+
+  function add() {
+    onChange([
+      ...tiers,
+      {
+        name: `Lv.${tiers.length + 1}`,
+        iconUrl: '',
+        target: 0,
+        rewardText: '',
+      },
+    ]);
+  }
+
+  function patch(idx: number, fields: Partial<HonorTier>) {
+    onChange(tiers.map((t, i) => (i === idx ? { ...t, ...fields } : t)));
+  }
+
+  function remove(idx: number) {
+    onChange(tiers.filter((_, i) => i !== idx));
+  }
+
+  async function uploadIconFor(idx: number, file: File) {
+    setUploadingIdx(idx);
+    setUploadErr(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      // Tier icons are static images (SVGA at the per-tier level
+      // would explode payload size; admin can still set the
+      // top-level honor icon to SVGA for the headline animation).
+      const res = await api<{ url: string; publicId: string }>(
+        '/admin/honors/upload/icon',
+        { method: 'POST', body: fd },
+      );
+      patch(idx, { iconUrl: res.url });
+    } catch (e: any) {
+      setUploadErr(e.message);
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Tiers ({tiers.length})
+          </h3>
+          <p className="text-[11px] text-slate-500">
+            Each tier is one level the user can climb to. Mobile renders
+            the per-tier icon and target on the medal detail card.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={add}>
+          + Add tier
+        </Button>
+      </div>
+      {uploadErr && (
+        <div className="mb-2">
+          <ErrorAlert message={uploadErr} />
+        </div>
+      )}
+      {tiers.length === 0 ? (
+        <p className="py-3 text-center text-xs text-slate-400">
+          No tiers yet — add one to define Lv.1.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {tiers.map((t, i) => (
+            <div
+              key={i}
+              className="rounded border border-slate-200 bg-white p-3"
+            >
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Name
+                  </label>
+                  <Input
+                    value={t.name}
+                    onChange={(e) => patch(i, { name: e.target.value })}
+                    placeholder={`Lv.${i + 1}`}
+                  />
+                </div>
+                <div className="col-span-3">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Target
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={String(t.target)}
+                    onChange={(e) =>
+                      patch(i, { target: Number(e.target.value) || 0 })
+                    }
+                    placeholder="5000000000"
+                  />
+                </div>
+                <div className="col-span-7">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Reward text
+                  </label>
+                  <Input
+                    value={t.rewardText}
+                    onChange={(e) =>
+                      patch(i, { rewardText: e.target.value })
+                    }
+                    placeholder="Receive gifts worth 5,000,000,000 coins"
+                  />
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50">
+                  {t.iconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={t.iconUrl}
+                      alt=""
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-amber-500">✦</span>
+                  )}
+                </div>
+                <label
+                  className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                    uploadingIdx === i ? 'pointer-events-none opacity-60' : ''
+                  }`}
+                >
+                  {uploadingIdx === i ? 'Uploading…' : 'Upload icon'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadIconFor(i, file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                <div className="ml-auto flex gap-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      if (i === 0) return;
+                      const swapped = [...tiers];
+                      [swapped[i - 1], swapped[i]] = [
+                        swapped[i],
+                        swapped[i - 1],
+                      ];
+                      onChange(swapped);
+                    }}
+                    disabled={i === 0}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      if (i === tiers.length - 1) return;
+                      const swapped = [...tiers];
+                      [swapped[i], swapped[i + 1]] = [
+                        swapped[i + 1],
+                        swapped[i],
+                      ];
+                      onChange(swapped);
+                    }}
+                    disabled={i === tiers.length - 1}
+                  >
+                    ↓
+                  </Button>
+                  <Button variant="danger" onClick={() => remove(i)}>
+                    ✕
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
