@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(flutter analyze *)",
+      "Bash(xargs grep *)"
+    ]
+  }
+}
