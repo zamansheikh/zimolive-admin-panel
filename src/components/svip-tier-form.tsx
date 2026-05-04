@@ -25,6 +25,8 @@ export default function SvipTierForm({ initial, onSaved }: Props) {
     String(initial?.monthlyPointsRequired ?? 0),
   );
   const [coinReward, setCoinReward] = useState(String(initial?.coinReward ?? 0));
+  const [coinPrice, setCoinPrice] = useState(String(initial?.coinPrice ?? ''));
+  const [durationDays, setDurationDays] = useState(String(initial?.durationDays ?? 30));
   const [iconUrl, setIconUrl] = useState(initial?.iconUrl ?? '');
   const [iconPublicId, setIconPublicId] = useState(initial?.iconPublicId ?? '');
   const [bannerUrl, setBannerUrl] = useState(initial?.bannerUrl ?? '');
@@ -95,11 +97,17 @@ export default function SvipTierForm({ initial, onSaved }: Props) {
     setError(null);
     setSaving(true);
     try {
+      const priceNum = parseInt(coinPrice, 10);
+      if (!Number.isFinite(priceNum) || priceNum < 1) {
+        throw new Error('Coin price is required (must be at least 1).');
+      }
       const body: Record<string, unknown> = {
         ...(isEdit ? {} : { level: parseInt(level, 10) }),
         name,
         monthlyPointsRequired: parseInt(monthlyPointsRequired, 10) || 0,
         coinReward: parseInt(coinReward, 10) || 0,
+        coinPrice: priceNum,
+        durationDays: parseInt(durationDays, 10) || 0,
         iconUrl,
         iconPublicId,
         bannerUrl,
@@ -185,6 +193,34 @@ export default function SvipTierForm({ initial, onSaved }: Props) {
               min={0}
               value={coinReward}
               onChange={(e) => setCoinReward(e.target.value)}
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            label="Coin price (required)"
+            hint="Coins charged when a user buys this tier from the SVIP page"
+          >
+            <Input
+              type="number"
+              required
+              min={1}
+              value={coinPrice}
+              onChange={(e) => setCoinPrice(e.target.value)}
+              placeholder="e.g. 50000"
+            />
+          </Field>
+          <Field
+            label="Duration (days)"
+            hint="How long the purchase lasts. 0 = permanent."
+          >
+            <Input
+              type="number"
+              required
+              min={0}
+              value={durationDays}
+              onChange={(e) => setDurationDays(e.target.value)}
             />
           </Field>
         </div>

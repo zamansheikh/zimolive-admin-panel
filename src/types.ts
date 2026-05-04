@@ -473,6 +473,10 @@ export interface SvipTier {
   name: string;
   monthlyPointsRequired: number;
   coinReward: number;
+  /** Coins required to buy this tier outright. Required (>0). */
+  coinPrice: number;
+  /** Days the directly-purchased tier lasts. 0 = permanent. */
+  durationDays: number;
   iconUrl: string;
   iconPublicId: string;
   bannerUrl: string;
