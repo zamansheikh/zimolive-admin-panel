@@ -22,9 +22,24 @@ import type {
   HonorAssetType,
   HonorCategory,
   HonorItem,
+  HonorMetric,
   HonorTier,
   PaginatedList,
 } from '@/types';
+
+/// Auto-grant metric options shown in the per-tier dropdown.
+/// "Manual only" is the default — admin grants by hand.
+const METRIC_OPTIONS: { value: HonorMetric; label: string; hint: string }[] = [
+  { value: 'none', label: 'Manual only', hint: 'No auto-grant — admin grants manually.' },
+  { value: 'level', label: 'Account level', hint: 'User reaches level N.' },
+  { value: 'xp', label: 'XP earned', hint: 'Total XP ≥ N.' },
+  { value: 'followers', label: 'Followers count', hint: 'User has N followers.' },
+  { value: 'following', label: 'Following count', hint: 'User follows N people.' },
+  { value: 'coins_recharged', label: 'Coins recharged', hint: 'Lifetime coins purchased ≥ N.' },
+  { value: 'coins_sent', label: 'Coins spent on gifts', hint: 'Lifetime coins spent on gifts ≥ N.' },
+  { value: 'diamonds_received', label: 'Diamonds received', hint: 'Lifetime diamonds earned from gifts ≥ N.' },
+  { value: 'svip_tier', label: 'SVIP tier', hint: 'Currently active SVIP level ≥ N.' },
+];
 
 const CATEGORY_TONE: Record<HonorCategory, 'green' | 'amber' | 'red' | 'brand' | 'slate'> = {
   // New canonical buckets — picked to match the mobile tab strip.
@@ -266,10 +281,18 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
   const [category, setCategory] = useState<HonorCategory>(
     editing?.category ?? 'fortune',
   );
+  // Static image — required, shown on the Honor Wall grid.
   const [iconUrl, setIconUrl] = useState(editing?.iconUrl ?? '');
   const [iconPublicId, setIconPublicId] = useState(
     editing?.iconPublicId ?? '',
   );
+  // Optional SVGA — shown on the medal detail sheet on mobile.
+  const [svgaUrl, setSvgaUrl] = useState(editing?.svgaUrl ?? '');
+  const [svgaPublicId, setSvgaPublicId] = useState(
+    editing?.svgaPublicId ?? '',
+  );
+  // Kept for backwards compat with rows created before the dual-
+  // asset pair shipped. Always 'image' going forward.
   const [iconAssetType, setIconAssetType] = useState<HonorAssetType>(
     editing?.iconAssetType ?? 'image',
   );
@@ -285,11 +308,37 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Auto-suggest the code from the display name on create. Stops the
+  // moment the admin types in the code field manually (or on edit,
+  // since the row already has a code that's immutable).
+  const [codeManuallyEdited, setCodeManuallyEdited] = useState(!!editing);
+
+  function slugifyForCode(input: string): string {
+    return input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9_]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40);
+  }
+
+  function onNameChange(next: string) {
+    setName(next);
+    if (!codeManuallyEdited) {
+      setKey(slugifyForCode(next));
+    }
+  }
+
+  function onCodeChange(next: string) {
+    setCodeManuallyEdited(true);
+    setKey(next.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+  }
+
   /// Generic upload helper. The backend has two endpoints — image
   /// vs. SVGA — because Cloudinary needs different `resource_type`
-  /// values for each. We pick the endpoint by the `kind` arg and let
-  /// the server validate the mime/extension.
-  async function uploadIcon(file: File, kind: HonorAssetType) {
+  /// values for each. Image uploads write to `iconUrl`; SVGA uploads
+  /// write to `svgaUrl`. Both can coexist on the same medal.
+  async function uploadIcon(file: File, kind: 'image' | 'svga') {
     setUploading(true);
     setErr(null);
     try {
@@ -307,9 +356,14 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
         method: 'POST',
         body: fd,
       });
-      setIconUrl(res.url);
-      setIconPublicId(res.publicId);
-      setIconAssetType(res.assetType);
+      if (kind === 'svga') {
+        setSvgaUrl(res.url);
+        setSvgaPublicId(res.publicId);
+      } else {
+        setIconUrl(res.url);
+        setIconPublicId(res.publicId);
+        setIconAssetType('image');
+      }
     } catch (e: any) {
       setErr(e.message);
     } finally {
@@ -327,6 +381,8 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
         .map((t) => ({
           name: t.name.trim(),
           iconUrl: t.iconUrl.trim(),
+          svgaUrl: t.svgaUrl.trim(),
+          metric: t.metric ?? 'none',
           target: Number(t.target) || 0,
           rewardText: t.rewardText.trim(),
         }))
@@ -340,6 +396,8 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
         category,
         iconUrl: iconUrl.trim(),
         iconPublicId: iconPublicId.trim(),
+        svgaUrl: svgaUrl.trim(),
+        svgaPublicId: svgaPublicId.trim(),
         iconAssetType,
         // Backend derives maxTier from tiers.length when tiers
         // are supplied; keep maxTier ≥ 1 for legacy rows that
@@ -370,31 +428,46 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <Card className="w-full max-w-lg">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      {/*
+        Modal shell: capped at 90vh so the form never grows past the
+        viewport, with a flex column so the title + footer stay put
+        while only the middle body scrolls. We use a plain styled
+        div instead of <Card> because Card hardcodes `p-5` which
+        would leak into the scroll surface and prevent the title /
+        footer from sitting flush.
+      */}
+      <div className="flex w-full max-w-lg max-h-[90vh] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft">
+        <h2 className="border-b border-slate-100 px-5 pt-5 pb-3 text-lg font-semibold text-slate-900">
           {editing ? `Edit ${editing.name}` : 'New honor'}
         </h2>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-slate-600">
-              Key (machine id)
-            </label>
-            <Input
-              value={key}
-              onChange={(e) => setKey(e.target.value.toLowerCase())}
-              disabled={!!editing}
-              placeholder="charm_star"
-            />
-          </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
           <div>
             <label className="text-xs font-semibold text-slate-600">
               Name
             </label>
             <Input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => onNameChange(e.target.value)}
               placeholder="Charm Star"
             />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600">
+              Code
+            </label>
+            <Input
+              value={key}
+              onChange={(e) => onCodeChange(e.target.value)}
+              disabled={!!editing}
+              placeholder="charm_star"
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Auto-filled from the name. Lowercase letters, numbers,
+              and underscores only. Used internally to identify this
+              medal in code (e.g. for auto-grant rules) — leave it
+              alone unless you need a specific value. Cannot be
+              changed once saved.
+            </p>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600">
@@ -447,103 +520,154 @@ function _HonorFormModal({ editing, onClose }: FormProps) {
           {/* Per-tier editor. Each row is one level (Lv.1, Lv.2, …) */}
           <_TiersEditor tiers={tiers} onChange={setTiers} />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-600">
-              Icon
-            </label>
-            <div className="mt-1 flex items-center gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50">
-                {iconUrl ? (
-                  iconAssetType === 'svga' ? (
-                    // Browsers can't preview .svga inline, so we
-                    // surface the asset-type badge and a link.
-                    <a
-                      href={iconUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[10px] font-bold text-brand"
-                    >
-                      SVGA
-                    </a>
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={iconUrl}
-                      alt=""
-                      className="h-full w-full object-contain"
-                    />
-                  )
-                ) : (
-                  <span className="text-amber-500">✦</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <label
-                    className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
-                      uploading ? 'pointer-events-none opacity-60' : ''
-                    }`}
-                  >
-                    {uploading ? 'Uploading…' : 'Upload image'}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadIcon(file, 'image');
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
-                  <label
-                    className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
-                      uploading ? 'pointer-events-none opacity-60' : ''
-                    }`}
-                  >
-                    {uploading ? 'Uploading…' : 'Upload SVGA'}
-                    <input
-                      type="file"
-                      accept=".svga"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadIcon(file, 'svga');
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
+          <div className="rounded-lg border border-slate-200 p-3">
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Assets
+            </h3>
+            <p className="mb-3 text-[11px] text-slate-500">
+              The image is the static thumbnail shown in the Honor Wall
+              grid. The SVGA is optional and shown on the medal detail
+              sheet for an animated showcase. You can upload either or
+              both.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Static image */}
+              <div className="rounded border border-slate-200 bg-slate-50/50 p-3">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Image (grid thumbnail)
                 </div>
-                <div className="text-[10px] text-slate-500">
-                  Type: <b>{iconAssetType}</b>
-                  {iconUrl && ' · saved on Cloudinary'}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white">
+                    {iconUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={iconUrl}
+                        alt=""
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-amber-500">✦</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className={`cursor-pointer rounded border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                        uploading ? 'pointer-events-none opacity-60' : ''
+                      }`}
+                    >
+                      {iconUrl ? 'Replace' : 'Upload image'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadIcon(file, 'image');
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {iconUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIconUrl('');
+                          setIconPublicId('');
+                        }}
+                        className="text-[10px] text-red-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* SVGA */}
+              <div className="rounded border border-slate-200 bg-slate-50/50 p-3">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  SVGA (detail animation)
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white">
+                    {svgaUrl ? (
+                      <a
+                        href={svgaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] font-bold text-brand"
+                      >
+                        SVGA
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className={`cursor-pointer rounded border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                        uploading ? 'pointer-events-none opacity-60' : ''
+                      }`}
+                    >
+                      {svgaUrl ? 'Replace' : 'Upload SVGA'}
+                      <input
+                        type="file"
+                        accept=".svga"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadIcon(file, 'svga');
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {svgaUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSvgaUrl('');
+                          setSvgaPublicId('');
+                        }}
+                        className="text-[10px] text-red-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        {err && (
-          <div className="mt-3">
-            <ErrorAlert message={err} />
+        {/*
+          Pinned footer — error + Cancel/Save stay visible while the
+          body scrolls. Sits below the scrollable region inside the
+          flex column so it never moves.
+        */}
+        <div className="border-t border-slate-100 px-5 py-3">
+          {err && (
+            <div className="mb-3">
+              <ErrorAlert message={err} />
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => onClose(false)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={save}
+              disabled={busy || !name.trim() || (!editing && !key.trim())}
+            >
+              {busy ? 'Saving…' : 'Save'}
+            </Button>
           </div>
-        )}
-        <div className="mt-4 flex justify-end gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => onClose(false)}
-            disabled={busy}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={save}
-            disabled={busy || !name.trim() || (!editing && !key.trim())}
-          >
-            {busy ? 'Saving…' : 'Save'}
-          </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -567,6 +691,8 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
       {
         name: `Lv.${tiers.length + 1}`,
         iconUrl: '',
+        svgaUrl: '',
+        metric: 'none',
         target: 0,
         rewardText: '',
       },
@@ -581,20 +707,33 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
     onChange(tiers.filter((_, i) => i !== idx));
   }
 
-  async function uploadIconFor(idx: number, file: File) {
+  /**
+   * Upload either the per-tier static image or the per-tier SVGA.
+   * Hits the matching admin endpoint based on `kind`.
+   */
+  async function uploadIconFor(
+    idx: number,
+    file: File,
+    kind: 'image' | 'svga',
+  ) {
     setUploadingIdx(idx);
     setUploadErr(null);
     try {
       const fd = new FormData();
       fd.append('file', file);
-      // Tier icons are static images (SVGA at the per-tier level
-      // would explode payload size; admin can still set the
-      // top-level honor icon to SVGA for the headline animation).
-      const res = await api<{ url: string; publicId: string }>(
-        '/admin/honors/upload/icon',
-        { method: 'POST', body: fd },
-      );
-      patch(idx, { iconUrl: res.url });
+      const path =
+        kind === 'svga'
+          ? '/admin/honors/upload/svga'
+          : '/admin/honors/upload/icon';
+      const res = await api<{ url: string; publicId: string }>(path, {
+        method: 'POST',
+        body: fd,
+      });
+      if (kind === 'svga') {
+        patch(idx, { svgaUrl: res.url });
+      } else {
+        patch(idx, { iconUrl: res.url });
+      }
     } catch (e: any) {
       setUploadErr(e.message);
     } finally {
@@ -645,9 +784,29 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
                     placeholder={`Lv.${i + 1}`}
                   />
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-5">
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                    Target
+                    Auto-grant rule
+                  </label>
+                  <Select
+                    value={t.metric}
+                    onChange={(e) =>
+                      patch(i, { metric: e.target.value as HonorMetric })
+                    }
+                  >
+                    {METRIC_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {METRIC_OPTIONS.find((o) => o.value === t.metric)?.hint}
+                  </p>
+                </div>
+                <div className="col-span-5">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Target value
                   </label>
                   <Input
                     type="number"
@@ -656,10 +815,13 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
                     onChange={(e) =>
                       patch(i, { target: Number(e.target.value) || 0 })
                     }
-                    placeholder="5000000000"
+                    placeholder={
+                      t.metric === 'none' ? 'Ignored when manual' : 'e.g. 1000'
+                    }
+                    disabled={t.metric === 'none'}
                   />
                 </div>
-                <div className="col-span-7">
+                <div className="col-span-12">
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                     Reward text
                   </label>
@@ -673,6 +835,7 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-3">
+                {/* Per-tier static image */}
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50">
                   {t.iconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -690,14 +853,46 @@ function _TiersEditor({ tiers, onChange }: TiersEditorProps) {
                     uploadingIdx === i ? 'pointer-events-none opacity-60' : ''
                   }`}
                 >
-                  {uploadingIdx === i ? 'Uploading…' : 'Upload icon'}
+                  {uploadingIdx === i ? 'Uploading…' : 'Image'}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) uploadIconFor(i, file);
+                      if (file) uploadIconFor(i, file, 'image');
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {/* Per-tier SVGA — optional */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-50">
+                  {t.svgaUrl ? (
+                    <a
+                      href={t.svgaUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] font-bold text-brand"
+                    >
+                      SVGA
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                </div>
+                <label
+                  className={`cursor-pointer rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 ${
+                    uploadingIdx === i ? 'pointer-events-none opacity-60' : ''
+                  }`}
+                >
+                  {uploadingIdx === i ? 'Uploading…' : 'SVGA'}
+                  <input
+                    type="file"
+                    accept=".svga"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadIconFor(i, file, 'svga');
                       e.target.value = '';
                     }}
                   />

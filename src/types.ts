@@ -751,12 +751,32 @@ export type HonorCategory =
   | 'wealth'
   | 'event';
 
+/// Auto-grant rule metric. Pairs with `target` on a tier — the
+/// evaluator grants the highest tier the user qualifies for.
+/// `none` skips the auto-grant pathway entirely (admin-only).
+export type HonorMetric =
+  | 'none'
+  | 'level'
+  | 'xp'
+  | 'followers'
+  | 'following'
+  | 'coins_recharged'
+  | 'coins_sent'
+  | 'diamonds_received'
+  | 'svip_tier';
+
 /// Per-tier definition: each level of an honor has its own art,
 /// target the user has to hit, and reward text shown in the detail
 /// card. The first tier is the unlock; later tiers are upgrades.
+/// `svgaUrl` is optional and shown on the detail sheet only — the
+/// grid always uses the static `iconUrl`. `metric` + `target`
+/// drive the auto-grant rule; leave metric as `'none'` to skip
+/// auto-grant for that tier.
 export interface HonorTier {
   name: string;
   iconUrl: string;
+  svgaUrl: string;
+  metric: HonorMetric;
   target: number;
   rewardText: string;
 }
@@ -780,8 +800,12 @@ export interface HonorItem {
   category: HonorCategory;
   iconUrl: string;
   iconPublicId: string;
-  /** Whether the icon is a static image or an SVGA animation —
-   *  drives the mobile renderer (CachedNetworkImage vs SVGAEasyPlayer). */
+  /** Optional animated showcase. Shown on the medal detail sheet
+   *  when present; the grid always uses `iconUrl`. */
+  svgaUrl: string;
+  svgaPublicId: string;
+  /** Legacy field — kept for backwards compat. New rows always
+   *  use `iconUrl` for the image and `svgaUrl` for the SVGA. */
   iconAssetType: HonorAssetType;
   /** Max upgrade tier — 1..10 stars in the UI. Derived from
    *  `tiers.length` when tiers are configured. */
