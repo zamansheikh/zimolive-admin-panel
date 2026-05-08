@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -235,13 +236,19 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
             href="/dashboard"
             onClick={onClose}
             className="flex items-center gap-3"
-            aria-label="NexusChill dashboard"
+            aria-label="Zimo Live dashboard"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-sm font-bold text-white shadow-soft">
-              NC
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg shadow-soft">
+              <Image
+                src="/zimo-logo.png"
+                alt="Zimo Live"
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">NexusChill</div>
+              <div className="text-sm font-semibold text-slate-900">Zimo Live</div>
               <div className="text-xs text-slate-500">Admin Console</div>
             </div>
           </Link>

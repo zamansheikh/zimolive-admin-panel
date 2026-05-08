@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -75,10 +76,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-gradient text-xs font-bold text-white">
-              NC
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md">
+              <Image
+                src="/zimo-logo.png"
+                alt="Zimo Live"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <span className="text-sm font-semibold text-slate-900">NexusChill</span>
+            <span className="text-sm font-semibold text-slate-900">Zimo Live</span>
           </div>
 
           {/* Spacer keeps the logo visually centered. */}

@@ -10,12 +10,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'NexusChill — Admin Console',
+  title: 'Zimo Live — Admin Console',
   description: 'Run gifts, users, agencies, and live moderation from one place.',
+  icons: {
+    icon: '/zimo-logo.png',
+    apple: '/zimo-logo.png',
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#6D28D9',
+  themeColor: '#E91E63',
   width: 'device-width',
   initialScale: 1,
 };

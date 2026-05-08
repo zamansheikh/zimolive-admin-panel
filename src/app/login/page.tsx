@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -50,11 +51,11 @@ export default function LoginPage() {
       {/* Layered backdrop — gradient + soft mesh blobs. Decorative only. */}
       <div className="absolute inset-0 bg-brand-gradient" aria-hidden />
       <div
-        className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-brand-400/30 blur-3xl"
+        className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-orange-400/30 blur-3xl"
         aria-hidden
       />
       <div
-        className="absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl"
+        className="absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-purple-400/40 blur-3xl"
         aria-hidden
       />
 
@@ -62,12 +63,19 @@ export default function LoginPage() {
         <div className="mb-7 text-center">
           <Link
             href="/"
-            className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gradient text-xl font-bold text-white shadow-soft transition hover:scale-105"
-            aria-label="NexusChill home"
+            className="mx-auto mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-soft transition hover:scale-105"
+            aria-label="Zimo Live home"
           >
-            NC
+            <Image
+              src="/zimo-logo.png"
+              alt="Zimo Live"
+              width={64}
+              height={64}
+              priority
+              className="h-full w-full object-cover"
+            />
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900">NexusChill Admin</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Zimo Live Admin</h1>
           <p className="mt-1 text-sm text-slate-500">Sign in to the admin console</p>
         </div>
 

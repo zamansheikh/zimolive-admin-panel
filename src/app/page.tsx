@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -56,10 +57,16 @@ export default function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-sm font-bold text-white shadow-soft">
-              NC
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg shadow-soft">
+              <Image
+                src="/zimo-logo.png"
+                alt="Zimo Live"
+                width={36}
+                height={36}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <span className="text-base font-semibold text-slate-900">NexusChill</span>
+            <span className="text-base font-semibold text-slate-900">Zimo Live</span>
           </Link>
 
           <Link
@@ -174,12 +181,18 @@ export default function LandingPage() {
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-gradient text-[10px] font-bold text-white">
-              NC
+            <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-md">
+              <Image
+                src="/zimo-logo.png"
+                alt="Zimo Live"
+                width={24}
+                height={24}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <span>NexusChill Admin Console</span>
+            <span>Zimo Live Admin Console</span>
           </div>
-          <div>© {new Date().getFullYear()} NexusChill</div>
+          <div>© {new Date().getFullYear()} Zimo Live</div>
         </div>
       </footer>
     </div>
