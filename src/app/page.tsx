@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { authStorage } from '@/lib/auth';
+import { COMPANY_LINKS, LEGAL_LINKS } from '@/lib/legal-info';
 
 const FEATURES = [
   {
@@ -178,21 +179,72 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-md">
-              <Image
-                src="/zimolive-logo.webp"
-                alt="Zimo Live"
-                width={24}
-                height={24}
-                className="h-full w-full object-cover"
-              />
+      <footer className="border-t border-slate-200 bg-slate-950 text-slate-300">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4">
+            {/* Brand column */}
+            <div className="col-span-2 sm:col-span-1 lg:col-span-2">
+              <Link href="/" className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md">
+                  <Image
+                    src="/zimolive-logo.webp"
+                    alt="Zimo Live"
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <span className="text-base font-semibold text-white">Zimo Live</span>
+              </Link>
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
+                Live audio rooms, gifts, and community — built for fast, fun
+                social interaction.
+              </p>
             </div>
+
+            {/* Legal column */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Legal
+              </h4>
+              <ul className="mt-4 space-y-3 text-sm">
+                {LEGAL_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-slate-300 transition hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Company column */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Company
+              </h4>
+              <ul className="mt-4 space-y-3 text-sm">
+                {COMPANY_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-slate-300 transition hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-slate-800 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center">
+            <span>© {new Date().getFullYear()} Programmer Nexus. All rights reserved.</span>
             <span>Zimo Live Admin Console</span>
           </div>
-          <div>© {new Date().getFullYear()} Zimo Live</div>
         </div>
       </footer>
     </div>

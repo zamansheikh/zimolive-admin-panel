@@ -46,3 +46,56 @@ button {
 body.no-scroll {
   overflow: hidden;
 }
+
+/* Lightweight prose styling for legal/info pages — avoids pulling in the
+   full @tailwindcss/typography plugin for a handful of static documents. */
+.prose-zimo {
+  color: #334155;
+  line-height: 1.7;
+  font-size: 0.975rem;
+}
+.prose-zimo h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.prose-zimo h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.prose-zimo p {
+  margin-bottom: 1rem;
+}
+.prose-zimo ul {
+  margin: 0 0 1rem 1.25rem;
+  list-style: disc;
+}
+.prose-zimo ol {
+  margin: 0 0 1rem 1.25rem;
+  list-style: decimal;
+}
+.prose-zimo li {
+  margin-bottom: 0.4rem;
+}
+.prose-zimo a {
+  color: #BC1349;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-zimo a:hover {
+  color: #8E0D38;
+}
+.prose-zimo strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+.prose-zimo hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
