@@ -9,6 +9,7 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY tsconfig.json next.config.mjs postcss.config.mjs tailwind.config.ts next-env.d.ts ./
 COPY src ./src
+COPY public ./public
 
 # NEXT_PUBLIC_* vars are inlined into the JS bundle at build time —
 # setting them at runtime via env_file is too late. docker-compose
@@ -34,6 +35,7 @@ WORKDIR /app
 # alongside the static + public assets and drop the rest.
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 RUN addgroup -S app && adduser -S app -G app
 USER app
