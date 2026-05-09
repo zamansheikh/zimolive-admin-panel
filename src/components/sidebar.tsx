@@ -68,6 +68,12 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
+    label: 'Moderation',
+    items: [
+      { href: '/reports', label: 'User Reports', permission: 'moderation.view', icon: '⚑' },
+    ],
+  },
+  {
     label: 'Finance',
     items: [
       { href: '/transactions', label: 'Transactions', permission: 'transactions.view', icon: '$' },

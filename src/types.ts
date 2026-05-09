@@ -85,6 +85,57 @@ export interface AppUser {
   updatedAt: string;
 }
 
+// ---------------- Reports ----------------
+
+/** What kind of object is being reported. Mirrors backend enum. */
+export type ReportTargetType = 'user' | 'room' | 'moment' | 'message';
+
+/** Report categorisation — keep in sync with backend `ReportReason`. */
+export type ReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'hate_speech'
+  | 'sexual_content'
+  | 'child_safety'
+  | 'violence'
+  | 'impersonation'
+  | 'scam_or_fraud'
+  | 'self_harm'
+  | 'other';
+
+export type ReportStatus =
+  | 'pending'
+  | 'reviewed'
+  | 'actioned'
+  | 'dismissed';
+
+/** Light-weight populated user reference returned on report rows. */
+export interface ReportUserRef {
+  id: string;
+  numericId?: number | null;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
+export interface UserReport {
+  id: string;
+  reporterId: ReportUserRef | string;
+  targetType: ReportTargetType;
+  targetId: string;
+  /** Populated for `user` targets and resolved-via-owner for room/moment. */
+  targetUserId?: ReportUserRef | string | null;
+  reason: ReportReason;
+  description: string;
+  meta?: Record<string, unknown>;
+  status: ReportStatus;
+  adminNote: string;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ---------------- Agencies ----------------
 
 export interface Agency {
