@@ -66,6 +66,7 @@ export default function UsersPage() {
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
           <option value="banned">Banned</option>
+          <option value="deleted">Deleted</option>
         </Select>
         <Select value={isHost} onChange={(e) => { setIsHost(e.target.value); setPage(1); }}>
           <option value="">All users</option>
@@ -127,6 +128,7 @@ export default function UsersPage() {
                     {u.status === 'active' && <Badge tone="green">active</Badge>}
                     {u.status === 'banned' && <Badge tone="red">banned</Badge>}
                     {u.status === 'suspended' && <Badge tone="amber">suspended</Badge>}
+                    {u.status === 'deleted' && <Badge tone="slate">deleted</Badge>}
                   </Td>
                   <Td className="text-xs text-slate-500">
                     {new Date(u.createdAt).toLocaleDateString()}
