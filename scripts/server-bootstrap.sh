@@ -5,9 +5,9 @@
 # Idempotent — re-running on an already-set-up box is a no-op.
 #
 # Usage (on the server, as root):
-#   curl -sSL https://raw.githubusercontent.com/zamansheikh/nexuschill-admin-panel/main/scripts/server-bootstrap.sh | bash -s -- https://github.com/zamansheikh/nexuschill-admin-panel.git
+#   curl -sSL https://raw.githubusercontent.com/zamansheikh/zimolive-admin-panel/main/scripts/server-bootstrap.sh | bash -s -- https://github.com/zamansheikh/zimolive-admin-panel.git
 # OR (after a manual git clone):
-#   bash scripts/server-bootstrap.sh https://github.com/zamansheikh/nexuschill-admin-panel.git
+#   bash scripts/server-bootstrap.sh https://github.com/zamansheikh/zimolive-admin-panel.git
 #
 # After this finishes, follow the post-install steps it prints to:
 #   1. drop in .env (copy from .env.example, fill secrets)
@@ -15,12 +15,12 @@
 # =============================================================================
 set -euo pipefail
 
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/nexuschill-admin-panel}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/zimolive-admin-panel}"
 REPO_URL="${1:-}"
 
 if [ -z "$REPO_URL" ] && [ ! -d "$DEPLOY_DIR/.git" ]; then
   echo "Usage: $0 <git-repo-url>"
-  echo "  e.g. $0 https://github.com/zamansheikh/nexuschill-admin-panel.git"
+  echo "  e.g. $0 https://github.com/zamansheikh/zimolive-admin-panel.git"
   exit 1
 fi
 
@@ -104,9 +104,9 @@ ok "UFW: 3001 open (panel)"
 
 # --- 5. Helpful symlink so `deploy` is on PATH ----------------------------
 
-if [ ! -L /usr/local/bin/nexuschill-panel-deploy ]; then
-  ln -sf "$DEPLOY_DIR/scripts/deploy.sh" /usr/local/bin/nexuschill-panel-deploy
-  ok "Linked /usr/local/bin/nexuschill-panel-deploy → scripts/deploy.sh"
+if [ ! -L /usr/local/bin/zimolive-panel-deploy ]; then
+  ln -sf "$DEPLOY_DIR/scripts/deploy.sh" /usr/local/bin/zimolive-panel-deploy
+  ok "Linked /usr/local/bin/zimolive-panel-deploy → scripts/deploy.sh"
 fi
 
 # --- 6. Print next steps --------------------------------------------------
@@ -132,5 +132,5 @@ $(c_bold 'Manual steps still required before the first deploy:')
   3. Push to main. CI runs scripts/deploy.sh automatically.
 
   $(c_bold 'Manual deploy (without CI):')
-       nexuschill-panel-deploy
+       zimolive-panel-deploy
 EOF

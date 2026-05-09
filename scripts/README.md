@@ -15,10 +15,10 @@ The panel runs on **port 3001** so it can co-exist with the NestJS backend on po
 
 1. **On a fresh Debian/Ubuntu server**, run:
    ```bash
-   curl -sSL https://raw.githubusercontent.com/zamansheikh/nexuschill-admin-panel/main/scripts/server-bootstrap.sh \
-     | bash -s -- https://github.com/zamansheikh/nexuschill-admin-panel.git
+   curl -sSL https://raw.githubusercontent.com/zamansheikh/zimolive-admin-panel/main/scripts/server-bootstrap.sh \
+     | bash -s -- https://github.com/zamansheikh/zimolive-admin-panel.git
    ```
-   This installs Docker + Compose, clones the repo to `/opt/nexuschill-admin-panel`, opens UFW for port 3001, and prints the manual steps below.
+   This installs Docker + Compose, clones the repo to `/opt/zimolive-admin-panel`, opens UFW for port 3001, and prints the manual steps below.
 
 2. **Drop in `.env`** — copy from `.env.example` and fill in the API base URL.
 
@@ -36,13 +36,13 @@ If you don't already have one dedicated to CI:
 
 ```bash
 # On your laptop — DON'T reuse a personal key
-ssh-keygen -t ed25519 -C "github-actions@nexuschill-admin-panel" -f ~/.ssh/nexuschill_panel_deploy
+ssh-keygen -t ed25519 -C "github-actions@zimolive-admin-panel" -f ~/.ssh/zimolive_panel_deploy
 
 # Copy the public key to the server
-ssh-copy-id -i ~/.ssh/nexuschill_panel_deploy.pub root@<server-ip>
+ssh-copy-id -i ~/.ssh/zimolive_panel_deploy.pub root@<server-ip>
 
 # Print the private key (paste into GitHub secret SSH_PRIVATE_KEY)
-cat ~/.ssh/nexuschill_panel_deploy
+cat ~/.ssh/zimolive_panel_deploy
 ```
 
 ## What `deploy.sh` checks
@@ -50,7 +50,7 @@ cat ~/.ssh/nexuschill_panel_deploy
 Before touching containers, it validates:
 
 1. `git`, `docker`, `docker compose`, `curl` are installed.
-2. Repo at `/opt/nexuschill-admin-panel` exists with a working `.git`.
+2. Repo at `/opt/zimolive-admin-panel` exists with a working `.git`.
 3. `.env` is present (operator-managed; never overwritten).
 4. `.env` has `NEXT_PUBLIC_API_BASE_URL` set (warn-only — panel boots either way).
 5. Docker daemon is reachable.
@@ -70,10 +70,10 @@ If you ever want to redeploy without pushing a commit:
 
 ```bash
 # On the server
-nexuschill-panel-deploy
+zimolive-panel-deploy
 ```
 
-(`server-bootstrap.sh` symlinked `scripts/deploy.sh` → `/usr/local/bin/nexuschill-panel-deploy`.)
+(`server-bootstrap.sh` symlinked `scripts/deploy.sh` → `/usr/local/bin/zimolive-panel-deploy`.)
 
 You can also re-trigger the GitHub Actions workflow from the repo's Actions tab → **Deploy admin panel** → **Run workflow**.
 
@@ -90,16 +90,16 @@ Or skip CI and roll back directly on the server:
 
 ```bash
 ssh root@<server-ip>
-cd /opt/nexuschill-admin-panel
+cd /opt/zimolive-admin-panel
 git reset --hard <known-good-sha>
-nexuschill-panel-deploy
+zimolive-panel-deploy
 ```
 
 ## Sharing a host with the backend
 
 If both repos live on the same VPS:
 
-- Backend: cloned at `/opt/nexuschill-backend`, listens on **3000**, manual deploy alias `nexuschill-deploy`.
-- Panel:   cloned at `/opt/nexuschill-admin-panel`, listens on **3001**, manual deploy alias `nexuschill-panel-deploy`.
+- Backend: cloned at `/opt/zimolive-backend`, listens on **3000**, manual deploy alias `zimolive-deploy`.
+- Panel:   cloned at `/opt/zimolive-admin-panel`, listens on **3001**, manual deploy alias `zimolive-panel-deploy`.
 
 Both bootstrap scripts are additive on UFW — running one doesn't undo the other's open ports. Use the **same** `SSH_HOST` / `SSH_PRIVATE_KEY` secret values in both GitHub repos so a single CI key works for both.

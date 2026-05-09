@@ -11,7 +11,7 @@ set -euo pipefail
 # --- Config -----------------------------------------------------------------
 
 # Repo root on the server. server-bootstrap.sh clones here.
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/nexuschill-admin-panel}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/zimolive-admin-panel}"
 # Health check target. Next.js root either returns 200 or redirects
 # to /login — `-fL` follows the redirect and accepts any 2xx final.
 HEALTH_URL="${HEALTH_URL:-http://localhost:3001/}"
