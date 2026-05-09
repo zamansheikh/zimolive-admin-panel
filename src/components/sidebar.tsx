@@ -240,7 +240,7 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
           >
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg shadow-soft">
               <Image
-                src="/zimo-logo.png"
+                src="/zimolive-logo.webp"
                 alt="Zimo Live"
                 width={40}
                 height={40}

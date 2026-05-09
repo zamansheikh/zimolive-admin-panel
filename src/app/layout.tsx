@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   title: 'Zimo Live — Admin Console',
   description: 'Run gifts, users, agencies, and live moderation from one place.',
   icons: {
-    icon: '/zimo-logo.png',
-    apple: '/zimo-logo.png',
+    icon: '/zimolive-logo.webp',
+    apple: '/zimolive-logo.webp',
   },
 };
 

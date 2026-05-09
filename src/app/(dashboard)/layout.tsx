@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md">
               <Image
-                src="/zimo-logo.png"
+                src="/zimolive-logo.webp"
                 alt="Zimo Live"
                 width={32}
                 height={32}

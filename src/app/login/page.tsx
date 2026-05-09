@@ -67,7 +67,7 @@ export default function LoginPage() {
             aria-label="Zimo Live home"
           >
             <Image
-              src="/zimo-logo.png"
+              src="/zimolive-logo.webp"
               alt="Zimo Live"
               width={64}
               height={64}

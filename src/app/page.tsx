@@ -59,7 +59,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg shadow-soft">
               <Image
-                src="/zimo-logo.png"
+                src="/zimolive-logo.webp"
                 alt="Zimo Live"
                 width={36}
                 height={36}
@@ -183,7 +183,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-md">
               <Image
-                src="/zimo-logo.png"
+                src="/zimolive-logo.webp"
                 alt="Zimo Live"
                 width={24}
                 height={24}
