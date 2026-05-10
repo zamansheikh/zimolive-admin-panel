@@ -40,7 +40,13 @@ export default function SettingsPage() {
     };
   }, []);
 
-  async function toggle(key: 'familiesEnabled' | 'agenciesEnabled') {
+  async function toggle(
+    key:
+      | 'familiesEnabled'
+      | 'agenciesEnabled'
+      | 'emailLoginEnabled'
+      | 'phoneLoginEnabled',
+  ) {
     if (!config || !canManage) return;
     const next = !config[key];
     // Optimistic — flip immediately, revert on error.
@@ -107,6 +113,51 @@ export default function SettingsPage() {
             checked={config.agenciesEnabled}
             disabled={!canManage || saving === 'agenciesEnabled'}
             onToggle={() => toggle('agenciesEnabled')}
+          />
+
+          <div className="pt-4">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Sign-in methods
+            </h2>
+            <p className="mb-4 text-sm text-slate-600">
+              Toggle which alternative sign-in surfaces appear on the mobile
+              login screen. Google (Android) and Apple (iOS) are the platform
+              defaults and always shown — these flags only control the optional
+              email + phone-OTP forms below the primary button. Backend
+              endpoints stay alive when toggled off, so cached sessions keep
+              working; only the UI exposure changes.
+            </p>
+          </div>
+
+          <ToggleCard
+            title="Phone (OTP) login"
+            body={
+              <>
+                When on, mobile users can sign in with a phone number and
+                one-time SMS code. Off by default — recommended for markets
+                where SMS deliverability is unverified, or when you want to
+                steer users to Google / Apple sign-in for the launch.
+              </>
+            }
+            checked={config.phoneLoginEnabled}
+            disabled={!canManage || saving === 'phoneLoginEnabled'}
+            onToggle={() => toggle('phoneLoginEnabled')}
+          />
+
+          <ToggleCard
+            title="Email + password login"
+            body={
+              <>
+                When on, mobile users can register and sign in with an email
+                + password. Off by default — keeps the launch surface limited
+                to Google / Apple OAuth and avoids running an additional
+                password-reset flow. Existing email accounts keep working
+                regardless of this toggle.
+              </>
+            }
+            checked={config.emailLoginEnabled}
+            disabled={!canManage || saving === 'emailLoginEnabled'}
+            onToggle={() => toggle('emailLoginEnabled')}
           />
 
           {!canManage && (

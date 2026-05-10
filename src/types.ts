@@ -306,6 +306,10 @@ export interface AppConfig {
   key: 'singleton';
   familiesEnabled: boolean;
   agenciesEnabled: boolean;
+  /** Whether the mobile login page exposes the email + password form. */
+  emailLoginEnabled: boolean;
+  /** Whether the mobile login page exposes the phone-OTP form. */
+  phoneLoginEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
