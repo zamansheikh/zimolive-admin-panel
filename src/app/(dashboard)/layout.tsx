@@ -16,6 +16,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
+    // Override the public landing page's <title> while signed-in
+    // admins are inside the console — keeps the browser tab text
+    // useful for staff who pin the tab. The root layout's metadata
+    // still applies on first SSR; this just swaps it once the
+    // dashboard mounts on the client.
+    document.title = 'Zimo Live — Admin Console';
     const token = authStorage.getAccessToken();
     if (!token) {
       router.replace('/login');
