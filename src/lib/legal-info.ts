@@ -16,6 +16,14 @@ export const LEGAL_INFO = {
   // social features generally require 18+; bump down only after confirming
   // store-side age gating.
   minimumAge: 18,
+  // Public store listing URL — surfaced on the landing page so visitors
+  // can install the mobile app. Update if the bundle id ever changes.
+  playStoreUrl:
+    'https://play.google.com/store/apps/details?id=com.programmernexus.zimolive',
+  // Apple App Store URL — left blank until the iOS build ships. The
+  // landing page hides the App Store badge when this is empty so we
+  // don't ship a dead link.
+  appStoreUrl: '',
 } as const;
 
 export const LEGAL_LINKS = [
