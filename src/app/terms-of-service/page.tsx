@@ -11,9 +11,20 @@ export const metadata: Metadata = {
 export default function TermsOfServicePage() {
   return (
     <LegalShell
-      title="Terms of Service"
-      description={`These Terms of Service (“Terms”) govern your use of ${LEGAL_INFO.appName} (the “Service”), operated by ${LEGAL_INFO.operator}. By creating an account or using the Service, you agree to these Terms.`}
-    >
+      title={{ en: 'Terms of Service', zh: '服务条款' }}
+      description={{
+        en: `These Terms of Service (“Terms”) govern your use of ${LEGAL_INFO.appName} (the “Service”), operated by ${LEGAL_INFO.operator}. By creating an account or using the Service, you agree to these Terms.`,
+        zh: `本服务条款(以下简称"本条款")适用于您对 ${LEGAL_INFO.appName}(以下简称"本服务")的使用,本服务由 ${LEGAL_INFO.operator} 运营。一旦您创建账号或使用本服务,即视为您同意本条款。`,
+      }}
+      enContent={<TermsEN />}
+      zhContent={<TermsZH />}
+    />
+  );
+}
+
+function TermsEN() {
+  return (
+    <>
       <h2>1. Eligibility</h2>
       <p>
         You must be at least {LEGAL_INFO.minimumAge} years old to use the
@@ -159,11 +170,11 @@ export default function TermsOfServicePage() {
 
       <h2>11. Governing law</h2>
       <p>
-        These Terms are governed by the laws of {LEGAL_INFO.jurisdiction},
-        without regard to conflict-of-law principles. You agree to the
-        exclusive jurisdiction of the competent courts located in{' '}
-        {LEGAL_INFO.address}, except where applicable consumer-protection law
-        gives you the right to bring proceedings elsewhere.
+        These Terms are governed by the laws of the jurisdiction in which we
+        operate, without regard to conflict-of-law principles. You agree to
+        the exclusive jurisdiction of the competent courts in that
+        jurisdiction, except where applicable consumer-protection law gives
+        you the right to bring proceedings elsewhere.
       </p>
 
       <h2>12. Changes</h2>
@@ -182,6 +193,147 @@ export default function TermsOfServicePage() {
         </a>
         .
       </p>
-    </LegalShell>
+    </>
+  );
+}
+
+function TermsZH() {
+  return (
+    <>
+      <h2>1. 资格要求</h2>
+      <p>
+        您必须年满 {LEGAL_INFO.minimumAge} 周岁方可使用本服务。
+        使用 {LEGAL_INFO.appName} 即表示您确认符合此年龄要求,
+        且您对本服务的使用未违反任何适用于您的法律。
+      </p>
+
+      <h2>2. 您的账号</h2>
+      <ul>
+        <li>
+          您应对账号下发生的所有行为负责。请妥善保管您的登录凭据。
+        </li>
+        <li>您应提供真实准确的注册信息,并及时予以更新。</li>
+        <li>每人仅限注册一个账号。禁止出售、转让或共享账号。</li>
+      </ul>
+
+      <h2>3. 使用规范</h2>
+      <p>
+        在使用 {LEGAL_INFO.appName} 期间,您同意<strong>不得</strong>:
+      </p>
+      <ul>
+        <li>发布、直播或分享色情、裸露或任何形式涉及未成年人性化的内容。</li>
+        <li>
+          骚扰、威胁、人肉、冒充或伤害其他用户;实施仇恨言论、歧视或煽动暴力。
+        </li>
+        <li>推广、销售或协助交易非法商品、毒品、武器、赌博或欺诈活动。</li>
+        <li>
+          散布恶意软件、抓取本服务数据、试图绕过安全控制或干扰正常运行。
+        </li>
+        <li>
+          使用机器人、自动化代理或任何自动化手段虚增数据、刷礼物或制造虚假互动。
+        </li>
+        <li>侵犯他人知识产权,包括上传您无权分享的内容。</li>
+        <li>未经他人同意,索取或分享他人的个人信息。</li>
+      </ul>
+      <p>
+        对于违反本条款或对社区造成风险的行为,
+        我们有权移除内容、关闭直播间、限制功能或终止账号。
+      </p>
+
+      <h2>4. 用户生成内容</h2>
+      <p>
+        您保留所创建和上传内容的所有权(头像、动态、帖子、房间名称等)。
+        您发布内容即授予 {LEGAL_INFO.operator} 一项非独占、全球性、
+        免版税的许可,
+        允许我们在本服务范围内托管、存储、复制、修改(出于压缩、缩略图等技术目的)、
+        分发和展示该内容。该许可在您删除内容时终止,
+        但出于法律或安全原因须保留的情形除外。
+      </p>
+
+      <h2>5. 金币、礼物与虚拟物品</h2>
+      <ul>
+        <li>
+          {LEGAL_INFO.appName} 使用应用内虚拟货币
+          (称为"金币"或"钻石"),
+          可通过 Google Play 或 Apple App Store 购买。
+        </li>
+        <li>
+          虚拟物品不具有货币价值,不可兑换为现金、
+          不可在用户之间换取真实货币,
+          也不可在本服务之外转移,我们明确提供的功能除外。
+        </li>
+        <li>我们可能随时调整虚拟物品的价格、稀有度或可用性。</li>
+        <li>
+          有关退款详情,请参阅<a href="/refund-policy">退款政策</a>。
+        </li>
+      </ul>
+
+      <h2>6. 语音直播间</h2>
+      <p>
+        除非房主另行设置,直播间默认为公开。
+        您在房间内的言行可能被其他参与者听到或看到,
+        并可能被他们举报。房主负责对其房间进行管理;
+        {LEGAL_INFO.operator} 也将在全平台层面执行本条款。
+      </p>
+
+      <h2>7. 暂停与终止</h2>
+      <p>
+        如果我们有合理理由认为您违反了本条款、滥用其他用户或对平台构成风险,
+        我们可能临时或永久暂停或终止您的访问权限。
+        您可以随时停止使用本服务并删除您的账号。
+        详见<a href="/delete-account">删除账号</a>。
+      </p>
+
+      <h2>8. 免责声明</h2>
+      <p>
+        本服务按"现状"和"可获得"的状态提供。
+        在法律允许的最大范围内,{LEGAL_INFO.operator}{' '}
+        不作出任何明示、暗示或法定的保证,
+        包括关于适销性、特定用途适用性和不侵权的保证。
+        我们不保证本服务不会中断、无差错或绝对安全。
+      </p>
+
+      <h2>9. 责任限制</h2>
+      <p>
+        在法律允许的最大范围内,{LEGAL_INFO.operator}{' '}
+        不对任何间接、附带、特殊、后果性或惩罚性损害负责,
+        也不对利润、收入、数据或商誉的损失负责。
+        对于与本服务相关的任何索赔,
+        我们的累计责任以您在索赔事件发生前 12
+        个月内向我们实际支付的金额或 50 美元(以较高者为准)为限。
+      </p>
+
+      <h2>10. 赔偿</h2>
+      <p>
+        您同意就以下事项造成的任何索赔、损害或费用,
+        对 {LEGAL_INFO.operator} 及其管理人员、雇员和合作伙伴予以赔偿并使其免受损害:
+        (a) 您对本服务的使用;
+        (b) 您上传的内容;
+        (c) 您违反本条款的行为。
+      </p>
+
+      <h2>11. 管辖法律</h2>
+      <p>
+        本条款受我们运营所在司法管辖区的法律管辖,不考虑法律冲突原则。
+        您同意接受该司法管辖区主管法院的专属管辖,
+        但适用的消费者保护法赋予您在其他法院提起诉讼的权利除外。
+      </p>
+
+      <h2>12. 条款更新</h2>
+      <p>
+        我们可能会更新本条款。
+        我们会同步更新"最近更新"日期,并就重大变更在应用内进行通知。
+        变更生效后您继续使用本服务即视为接受修订后的条款。
+      </p>
+
+      <h2>13. 联系我们</h2>
+      <p>
+        如对本条款有任何疑问,请发送邮件至{' '}
+        <a href={`mailto:${LEGAL_INFO.supportEmail}`}>
+          {LEGAL_INFO.supportEmail}
+        </a>
+        。
+      </p>
+    </>
   );
 }

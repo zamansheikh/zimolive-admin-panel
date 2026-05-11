@@ -1,13 +1,20 @@
 // Centralised constants used across the legal/info pages so the operator
-// can update brand details (entity name, contact email, address, etc.)
-// in one place. All public-facing legal pages and the landing-page footer
+// can update brand details (entity name, contact email, etc.) in one
+// place. All public-facing legal pages and the landing-page footer
 // pull from here.
+//
+// Attribution is intentionally brand-only ("Zimo Live") — the legal
+// pages do not surface a separate operating entity or postal address
+// because the consumer-facing positioning is brand-first across both
+// locales (EN / 中文). Internal records of the actual operating
+// entity live in Play Console / billing accounts, not in the public
+// legal copy.
 
 export const LEGAL_INFO = {
   appName: 'Zimo Live',
-  operator: 'Programmer Nexus',
-  jurisdiction: 'Bangladesh',
-  address: 'Mymensingh, Bangladesh',
+  // Used wherever the legal copy needs a noun for "the operator" — kept
+  // identical to appName so the surface stays brand-only.
+  operator: 'Zimo Live',
   supportEmail: 'support@zimolive.com',
   privacyEmail: 'support@zimolive.com',
   // ISO date — bump whenever you materially change a page.

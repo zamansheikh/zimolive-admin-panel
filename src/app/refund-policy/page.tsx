@@ -11,9 +11,20 @@ export const metadata: Metadata = {
 export default function RefundPolicyPage() {
   return (
     <LegalShell
-      title="Refund Policy"
-      description={`This Refund Policy applies to in-app coin recharges purchased through Google Play or the Apple App Store inside ${LEGAL_INFO.appName}.`}
-    >
+      title={{ en: 'Refund Policy', zh: '退款政策' }}
+      description={{
+        en: `This Refund Policy applies to in-app coin recharges purchased through Google Play or the Apple App Store inside ${LEGAL_INFO.appName}.`,
+        zh: `本退款政策适用于在 ${LEGAL_INFO.appName} 内通过 Google Play 或 Apple App Store 购买的金币充值。`,
+      }}
+      enContent={<RefundEN />}
+      zhContent={<RefundZH />}
+    />
+  );
+}
+
+function RefundEN() {
+  return (
+    <>
       <h2>1. What you are buying</h2>
       <p>
         {LEGAL_INFO.appName} sells an in-app virtual currency (“coins” or
@@ -82,12 +93,8 @@ export default function RefundPolicyPage() {
           live rooms — at the time the refund is requested. Coins are
           consumable; once consumed, they cannot be returned.
         </li>
-        <li>
-          The store’s standard refund window has passed.
-        </li>
-        <li>
-          The account shows a pattern of refund-then-spend abuse.
-        </li>
+        <li>The store’s standard refund window has passed.</li>
+        <li>The account shows a pattern of refund-then-spend abuse.</li>
       </ul>
 
       <h2>5. Account actions on refund</h2>
@@ -125,6 +132,107 @@ export default function RefundPolicyPage() {
         Nothing in this policy limits any non-waivable consumer-protection
         rights you have under the law of your country of residence.
       </p>
-    </LegalShell>
+    </>
+  );
+}
+
+function RefundZH() {
+  return (
+    <>
+      <h2>1. 您购买的是什么</h2>
+      <p>
+        {LEGAL_INFO.appName} 出售一种应用内虚拟货币
+        (称为"金币"或"钻石"),
+        您可在应用内将其用于送礼、房间功能或其他可消耗的虚拟物品。
+        金币属于数字化、可消耗的虚拟商品,
+        在应用外不具有货币价值,亦不可兑换为现金。
+      </p>
+
+      <h2>2. 退款由应用商店处理</h2>
+      <p>
+        所有金币充值的款项均由 <strong>Google Play</strong>(Android)或{' '}
+        <strong>Apple App Store</strong>(iOS)处理。{LEGAL_INFO.operator}
+        <em>不会</em>直接向您的银行卡扣款,
+        在技术上也无法直接向您的银行或电子钱包发起退款。
+        退款申请须向您下单所在的应用商店提出。
+      </p>
+
+      <h3>如何通过 Google Play 申请退款</h3>
+      <ol>
+        <li>
+          在浏览器中打开 <em>play.google.com</em>,
+          使用购买时的 Google 账号登录。
+        </li>
+        <li>在购买记录中找到相应订单。</li>
+        <li>
+          选择 <em>"申请退款"</em>或 <em>"反馈问题"</em>,
+          并按页面指引操作。
+        </li>
+      </ol>
+
+      <h3>如何通过 Apple App Store 申请退款</h3>
+      <ol>
+        <li>
+          访问 <em>reportaproblem.apple.com</em>,使用 Apple ID 登录。
+        </li>
+        <li>
+          找到 {LEGAL_INFO.appName} 相关订单,选择原因并提交申请。
+        </li>
+      </ol>
+
+      <h2>3. 通常会获批退款的情形</h2>
+      <p>退款由各应用商店自行裁定。通常下列情形较易获批:</p>
+      <ul>
+        <li>因技术故障导致金币已购买但未到账。</li>
+        <li>购买系误操作或他人未经授权在您的设备上完成。</li>
+        <li>申请在应用商店标准退款窗口期内提出。</li>
+      </ul>
+
+      <h2>4. 通常被拒绝退款的情形</h2>
+      <p>下列情形通常会被拒绝退款:</p>
+      <ul>
+        <li>
+          申请退款时金币已被使用(例如在直播间送礼)。
+          金币属于消耗品,一经消费即无法返还。
+        </li>
+        <li>已超出应用商店的标准退款窗口期。</li>
+        <li>账号存在反复"退款后再消费"的滥用情形。</li>
+      </ul>
+
+      <h2>5. 退款后的账号处理</h2>
+      <p>
+        若应用商店为您退还充值款项,我们将同步扣减对应的金币余额,
+        以及由这些金币所衍生的任何权益。
+        若已退款的金币已被消费或从钱包中划出,
+        由此产生的负余额可能导致充值及其他付费功能被暂停,
+        直至余额恢复至零。
+        反复滥用退款可能根据
+        <a href="/terms-of-service">服务条款</a>导致账号被终止。
+      </p>
+
+      <h2>6. 我们能提供的协助</h2>
+      <p>
+        我们无法直接发起退款,但可以协助您排查问题 ——
+        例如成功扣款后金币未到账的情况。请发送邮件至{' '}
+        <a href={`mailto:${LEGAL_INFO.supportEmail}`}>
+          {LEGAL_INFO.supportEmail}
+        </a>
+        ,并附上:
+      </p>
+      <ul>
+        <li>您的用户名或账号注册邮箱。</li>
+        <li>
+          来自 Google Play 或 App Store 的订单号或收据(截图亦可)。
+        </li>
+        <li>购买日期与金额。</li>
+        <li>问题的简要描述。</li>
+      </ul>
+
+      <h2>7. 法定权利</h2>
+      <p>
+        本政策的任何内容均不限制您依据所在国家/地区法律
+        所享有的不可放弃的消费者保护权利。
+      </p>
+    </>
   );
 }

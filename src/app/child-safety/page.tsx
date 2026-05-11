@@ -11,9 +11,20 @@ export const metadata: Metadata = {
 export default function ChildSafetyPage() {
   return (
     <LegalShell
-      title="Child Safety Standards"
-      description={`${LEGAL_INFO.appName} has zero tolerance for child sexual abuse and exploitation (CSAE). This page describes our standards and the steps we take to enforce them — required by Google Play's Child Safety Standards Policy.`}
-    >
+      title={{ en: 'Child Safety Standards', zh: '儿童安全标准' }}
+      description={{
+        en: `${LEGAL_INFO.appName} has zero tolerance for child sexual abuse and exploitation (CSAE). This page describes our standards and the steps we take to enforce them — required by Google Play's Child Safety Standards Policy.`,
+        zh: `${LEGAL_INFO.appName} 对儿童性虐待和性剥削 (CSAE) 采取零容忍政策。本页面说明我们的标准以及为执行这些标准所采取的措施 —— 此为 Google Play 儿童安全标准政策的要求。`,
+      }}
+      enContent={<ChildSafetyEN />}
+      zhContent={<ChildSafetyZH />}
+    />
+  );
+}
+
+function ChildSafetyEN() {
+  return (
+    <>
       <h2>1. Our commitment</h2>
       <p>
         {LEGAL_INFO.operator} prohibits child sexual abuse material (CSAM) and
@@ -97,7 +108,9 @@ export default function ChildSafetyPage() {
         </li>
         <li>
           Email our designated child-safety contact at{' '}
-          <a href={`mailto:${LEGAL_INFO.supportEmail}?subject=Child%20Safety%20Report`}>
+          <a
+            href={`mailto:${LEGAL_INFO.supportEmail}?subject=Child%20Safety%20Report`}
+          >
             {LEGAL_INFO.supportEmail}
           </a>{' '}
           with the subject line <em>“Child Safety Report.”</em>
@@ -124,10 +137,6 @@ export default function ChildSafetyPage() {
             {LEGAL_INFO.supportEmail}
           </a>
         </li>
-        <li>
-          <strong>Postal address:</strong> {LEGAL_INFO.operator},{' '}
-          {LEGAL_INFO.address}
-        </li>
       </ul>
 
       <h2>7. For parents and guardians</h2>
@@ -150,6 +159,134 @@ export default function ChildSafetyPage() {
         <li>INHOPE (international hotline network): inhope.org</li>
         <li>Internet Watch Foundation: iwf.org.uk</li>
       </ul>
-    </LegalShell>
+    </>
+  );
+}
+
+function ChildSafetyZH() {
+  return (
+    <>
+      <h2>1. 我们的承诺</h2>
+      <p>
+        {LEGAL_INFO.operator} 在 {LEGAL_INFO.appName}{' '}
+        平台上禁止任何儿童性虐待材料 (CSAM)
+        以及任何将未成年人性化、置于危险或加以剥削的内容。
+        我们致力于阻止未成年人使用本平台,
+        并对违规内容或行为的举报予以迅速响应。
+      </p>
+
+      <h2>2. 最低年龄</h2>
+      <p>
+        {LEGAL_INFO.appName} 并非面向儿童的产品。
+        用户必须年满<strong> {LEGAL_INFO.minimumAge} 周岁</strong>
+        方可注册账号或使用本服务的任何功能。
+        我们不会刻意收集未达最低年龄者的个人信息。
+        一经发现用户低于最低年龄,我们将停用该账号并删除相关数据。
+      </p>
+
+      <h2>3. 禁止的内容与行为</h2>
+      <p>在 {LEGAL_INFO.appName} 上,以下行为被严格禁止:</p>
+      <ul>
+        <li>
+          任何形式的儿童性虐待材料 (CSAM),
+          包括 AI 生成、绘制、动画或合成形式的内容。
+        </li>
+        <li>
+          涉及未成年人的性化内容,
+          包括暗示性姿势、着装、言语或评论。
+        </li>
+        <li>
+          诱骗 (Grooming) —— 成年人出于性目的或剥削目的与未成年人建立联系。
+        </li>
+        <li>
+          性勒索、向未成年人索取色情内容,
+          以及通过本服务协调实施的任何线下剥削行为。
+        </li>
+        <li>任何形式的人口贩运、拐骗或危害未成年人的行为。</li>
+        <li>对上述任何行为的推广、正常化或教唆。</li>
+      </ul>
+
+      <h2>4. 如何执行</h2>
+      <ul>
+        <li>
+          <strong>检测。</strong>
+          我们结合自动化滥用检测、第三方安全工具
+          (Firebase、Google) 以及对举报内容的人工审核,
+          以识别违规内容。
+        </li>
+        <li>
+          <strong>移除。</strong>
+          一经确认违反本政策的内容将被立即移除,
+          涉及账号将被暂停或永久终止。
+        </li>
+        <li>
+          <strong>向有关部门举报。</strong>
+          经核实的 CSAM 内容将根据法律要求,
+          上报至美国国家失踪及受剥削儿童中心 (NCMEC)
+          或我们运营所在司法辖区的对应机构。
+        </li>
+        <li>
+          <strong>数据留存。</strong>
+          我们将留存相关数据,以便依据合法程序向执法机构提供。
+        </li>
+        <li>
+          <strong>升级机制。</strong>
+          所有 CSAE 举报将转交指定的儿童安全联络人优先处理。
+        </li>
+      </ul>
+
+      <h2>5. 如何举报</h2>
+      <p>
+        如果您在 {LEGAL_INFO.appName} 上发现危害或剥削未成年人的内容或行为:
+      </p>
+      <ol>
+        <li>使用房间、个人资料或消息上的应用内举报功能。</li>
+        <li>
+          发送邮件至我们指定的儿童安全联络邮箱{' '}
+          <a
+            href={`mailto:${LEGAL_INFO.supportEmail}?subject=Child%20Safety%20Report`}
+          >
+            {LEGAL_INFO.supportEmail}
+          </a>
+          ,主题请填写 <em>"Child Safety Report"</em>。
+        </li>
+        <li>
+          如儿童正面临紧急危险,请优先联系当地紧急救助部门。
+        </li>
+      </ol>
+      <p>
+        我们将在 24 小时内确认收到儿童安全举报,并尽快展开调查。
+      </p>
+
+      <h2>6. 指定儿童安全联络方式</h2>
+      <p>监管机构、非政府组织或执法机关的儿童安全相关咨询,请联系:</p>
+      <ul>
+        <li>
+          <strong>邮箱:</strong>{' '}
+          <a href={`mailto:${LEGAL_INFO.supportEmail}`}>
+            {LEGAL_INFO.supportEmail}
+          </a>
+        </li>
+      </ul>
+
+      <h2>7. 致家长与监护人</h2>
+      <p>
+        如果您认为您的孩子未达最低年龄却在使用 {LEGAL_INFO.appName},
+        或希望申请删除某个账号,请发送邮件至{' '}
+        <a href={`mailto:${LEGAL_INFO.supportEmail}`}>
+          {LEGAL_INFO.supportEmail}
+        </a>
+        ,并附上该账号的用户名或注册邮箱。
+      </p>
+
+      <h2>8. 外部资源</h2>
+      <ul>
+        <li>
+          美国国家失踪及受剥削儿童中心 (NCMEC):missingkids.org
+        </li>
+        <li>INHOPE(国际热线联盟):inhope.org</li>
+        <li>互联网观察基金会:iwf.org.uk</li>
+      </ul>
+    </>
   );
 }

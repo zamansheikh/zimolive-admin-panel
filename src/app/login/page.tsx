@@ -7,6 +7,11 @@ import { useRouter } from 'next/navigation';
 
 import { ApiError, api } from '@/lib/api';
 import { authStorage } from '@/lib/auth';
+import {
+  LANDING_LOCALES,
+  type Locale,
+  useLandingLocale,
+} from '@/lib/landing-i18n';
 import type { Admin, AdminRole, AdminTokens } from '@/types';
 
 interface LoginResponse {
@@ -17,6 +22,7 @@ interface LoginResponse {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { locale, setLocale, t } = useLandingLocale();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,9 +43,12 @@ export default function LoginPage() {
       router.replace('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {
+        // Backend error messages are not currently localized — surface
+        // them verbatim. The generic fallback below covers transport
+        // failures (offline, DNS, CORS) which we DO control.
         setError(err.message);
       } else {
-        setError('Unable to reach the server. Check your connection or contact an administrator.');
+        setError(t.loginGenericError);
       }
     } finally {
       setLoading(false);
@@ -59,12 +68,18 @@ export default function LoginPage() {
         aria-hidden
       />
 
+      {/* Locale toggle floats over the gradient so it doesn't widen
+          the card. Same control as the landing-page header. */}
+      <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+        <LocaleToggle locale={locale} onChange={setLocale} />
+      </div>
+
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-card sm:p-8">
         <div className="mb-7 text-center">
           <Link
             href="/"
             className="mx-auto mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-soft transition hover:scale-105"
-            aria-label="Zimo Live home"
+            aria-label="Zimo Live"
           >
             <Image
               src="/zimolive-logo.webp"
@@ -75,14 +90,14 @@ export default function LoginPage() {
               className="h-full w-full object-cover"
             />
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900">Zimo Live Admin</h1>
-          <p className="mt-1 text-sm text-slate-500">Sign in to the admin console</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.loginTitle}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t.loginSubtitle}</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Email or Username
+              {t.loginEmailLabel}
             </label>
             <input
               type="text"
@@ -96,7 +111,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              {t.loginPasswordLabel}
+            </label>
             <input
               type="password"
               required
@@ -119,7 +136,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-brand-700 px-4 py-2.5 font-medium text-white shadow-soft transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? t.loginSubmitting : t.loginSubmit}
           </button>
         </form>
 
@@ -128,13 +145,53 @@ export default function LoginPage() {
             href="/"
             className="text-slate-500 transition hover:text-brand-700"
           >
-            ← Back to home
+            {t.loginBackToHome}
           </Link>
           <span className="text-slate-400">
-            Default creds seeded from backend <code>.env</code>
+            <code>{t.loginDefaultCreds}</code>
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * EN | 中文 segmented control. Mirrors the landing-page header so
+ * the toggle feels like the same control across surfaces. Tuned for
+ * a dark backdrop (the login page sits on the brand gradient).
+ */
+function LocaleToggle({
+  locale,
+  onChange,
+}: {
+  locale: Locale;
+  onChange: (l: Locale) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className="inline-flex items-center rounded-full border border-white/30 bg-white/10 p-0.5 text-xs shadow-soft backdrop-blur"
+    >
+      {LANDING_LOCALES.map((l) => {
+        const active = l.code === locale;
+        return (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => onChange(l.code)}
+            aria-pressed={active}
+            className={`rounded-full px-2.5 py-1 font-medium transition ${
+              active
+                ? 'bg-white text-brand-700 shadow-soft'
+                : 'text-white/80 hover:text-white'
+            }`}
+          >
+            {l.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

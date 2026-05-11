@@ -11,9 +11,20 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <LegalShell
-      title="Privacy Policy"
-      description={`This Privacy Policy explains how ${LEGAL_INFO.operator} (“we,” “us”) handles information collected through the ${LEGAL_INFO.appName} mobile application and related services (the “Service”).`}
-    >
+      title={{ en: 'Privacy Policy', zh: '隐私政策' }}
+      description={{
+        en: `This Privacy Policy explains how ${LEGAL_INFO.operator} (“we,” “us”) handles information collected through the ${LEGAL_INFO.appName} mobile application and related services (the “Service”).`,
+        zh: `本隐私政策说明 ${LEGAL_INFO.operator}(以下简称“我们”)如何处理通过 ${LEGAL_INFO.appName} 移动应用及相关服务(以下简称“本服务”)收集的信息。`,
+      }}
+      enContent={<PrivacyEN />}
+      zhContent={<PrivacyZH />}
+    />
+  );
+}
+
+function PrivacyEN() {
+  return (
+    <>
       <h2>1. Information we collect</h2>
       <p>
         We collect the minimum information necessary to operate the Service.
@@ -148,9 +159,8 @@ export default function PrivacyPolicyPage() {
       <h2>8. International transfers</h2>
       <p>
         Your information may be processed in countries other than the one you
-        live in, including {LEGAL_INFO.jurisdiction} and the regions where our
-        cloud providers operate. We rely on standard contractual safeguards
-        for cross-border transfers.
+        live in, including the regions where our cloud providers operate. We
+        rely on standard contractual safeguards for cross-border transfers.
       </p>
 
       <h2>9. Changes</h2>
@@ -167,8 +177,149 @@ export default function PrivacyPolicyPage() {
         <a href={`mailto:${LEGAL_INFO.privacyEmail}`}>
           {LEGAL_INFO.privacyEmail}
         </a>
-        . Postal address: {LEGAL_INFO.operator}, {LEGAL_INFO.address}.
+        .
       </p>
-    </LegalShell>
+    </>
+  );
+}
+
+function PrivacyZH() {
+  return (
+    <>
+      <h2>1. 我们收集的信息</h2>
+      <p>我们仅收集运营本服务所必需的最少信息,具体包括:</p>
+      <ul>
+        <li>
+          <strong>账号信息</strong> —— 您创建账号时提供的姓名、邮箱地址、
+          头像、性别、国家/地区,以及由 Google 登录或 Firebase Authentication
+          提供的身份验证标识。
+        </li>
+        <li>
+          <strong>个人资料内容</strong> —— 您在应用中发布的简介、头像,
+          以及任何动态、帖子或媒体内容。
+        </li>
+        <li>
+          <strong>直播间活动</strong> —— 您加入或主持的房间、收发的礼物,
+          以及在聊天中发送的消息。语音流通过 Agora 实时音频架构传输,
+          我们默认不会进行录制。
+        </li>
+        <li>
+          <strong>钱包与交易数据</strong> —— 您在应用内的金币余额、
+          充值记录与礼物记录。所有付款由 Google Play 或 Apple App Store
+          处理,我们不会接收或存储您的银行卡或银行账户信息。
+        </li>
+        <li>
+          <strong>设备与诊断数据</strong> —— 设备型号、操作系统版本、
+          应用版本、语言、时区、IP 地址、崩溃日志与汇总使用指标。
+        </li>
+        <li>
+          <strong>推送令牌</strong> —— 用于发送通知的 Firebase Cloud
+          Messaging 注册令牌。
+        </li>
+      </ul>
+
+      <h2>2. 信息使用方式</h2>
+      <ul>
+        <li>用于创建和验证您的账号。</li>
+        <li>用于运营语音直播间、聊天、礼物及其他社交功能。</li>
+        <li>用于处理应用内金币充值,并将所购金币计入您的钱包。</li>
+        <li>
+          用于发送交易类与互动类推送通知。
+          您可以在应用设置或设备系统中关闭通知。
+        </li>
+        <li>用于侦测和应对滥用、欺诈、安全事件以及违反服务条款的行为。</li>
+        <li>用于履行法律义务。</li>
+      </ul>
+
+      <h2>3. 信息共享</h2>
+      <p>
+        我们不会出售您的个人信息。
+        仅在为运营本服务所必需的情况下与下列服务提供商共享数据:
+      </p>
+      <ul>
+        <li>
+          <strong>Google / Firebase</strong> —— 身份验证、推送通知、崩溃报告。
+        </li>
+        <li>
+          <strong>Agora</strong> —— 直播间所需的实时音频架构。
+        </li>
+        <li>
+          <strong>Cloudinary</strong> —— 媒体文件存储与图片分发。
+        </li>
+        <li>
+          <strong>应用商店</strong> —— Google Play 与 Apple App Store
+          负责支付处理与退款。
+        </li>
+      </ul>
+      <p>
+        上述服务提供商根据合同约定,仅能将您的信息用于向我们提供相应服务。
+        在法律要求或为保护用户权益与安全的必要情况下,我们也可能披露信息。
+      </p>
+
+      <h2>4. 数据保留</h2>
+      <p>
+        在您的账号处于活跃状态期间,我们将保留账号数据。
+        当您删除账号后,我们将在 30 天内删除您的个人资料数据;
+        但出于防欺诈、税务或法律合规要求需要保留的备份和有限记录除外
+        (财务记录通常最长保留 6 年)。
+      </p>
+
+      <h2>5. 您的选择与权利</h2>
+      <ul>
+        <li>您可以随时在应用内编辑个人资料和内容。</li>
+        <li>您可以通过设备系统设置关闭推送通知。</li>
+        <li>
+          您可以随时申请删除账号 —— 详见
+          <a href="/delete-account">删除账号</a>页面。
+        </li>
+        <li>
+          根据您所在地区的法律,您可能享有其他权利,
+          例如访问权、更正权、可携权与反对权。
+          如需行使,请发送邮件至{' '}
+          <a href={`mailto:${LEGAL_INFO.privacyEmail}`}>
+            {LEGAL_INFO.privacyEmail}
+          </a>
+          。
+        </li>
+      </ul>
+
+      <h2>6. 安全</h2>
+      <p>
+        我们使用 TLS 加密传输数据,
+        对敏感凭据进行服务器端哈希处理,并对管理系统实施访问控制。
+        没有任何系统能做到百分之百安全;
+        您也有责任妥善保管您的账号凭据。
+      </p>
+
+      <h2>7. 未成年人保护</h2>
+      <p>
+        {LEGAL_INFO.appName} 并非面向儿童的产品。使用本服务必须年满{' '}
+        {LEGAL_INFO.minimumAge} 周岁。
+        更多信息请参阅<a href="/child-safety">儿童安全</a>页面。
+      </p>
+
+      <h2>8. 跨境数据传输</h2>
+      <p>
+        您的信息可能会在您所在国家/地区以外的地方进行处理,
+        包括我们的云服务提供商所在的区域。
+        我们依据标准合同条款等通行机制保障跨境数据传输的合规与安全。
+      </p>
+
+      <h2>9. 政策更新</h2>
+      <p>
+        我们可能会更新本隐私政策。
+        我们会同步更新"最近更新"日期,并就重大变更在应用内进行通知。
+        变更生效后您继续使用本服务即视为接受修订后的政策。
+      </p>
+
+      <h2>10. 联系我们</h2>
+      <p>
+        如有疑问或需提交隐私请求,请发送邮件至{' '}
+        <a href={`mailto:${LEGAL_INFO.privacyEmail}`}>
+          {LEGAL_INFO.privacyEmail}
+        </a>
+        。
+      </p>
+    </>
   );
 }

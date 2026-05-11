@@ -5,55 +5,29 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { authStorage } from '@/lib/auth';
-import { COMPANY_LINKS, LEGAL_INFO, LEGAL_LINKS } from '@/lib/legal-info';
+import {
+  LANDING_LOCALES,
+  type LandingStrings,
+  type Locale,
+  useLandingLocale,
+} from '@/lib/landing-i18n';
+import { LEGAL_INFO } from '@/lib/legal-info';
 
 // ============================================================================
 // Public marketing landing page for Zimo Live.
 //
-// The page targets *consumers* who land here from the Play Store
-// listing, social posts, or word of mouth. Admins still need a way in,
-// but the staff sign-in is intentionally small (a "Staff" link in the
-// header + a one-line note in the footer) so it doesn't compete with
-// the mobile-app CTA for the consumer eye.
+// Consumer-first. Admins reach login via a small footer link only.
 //
-// Mobile-first: every element renders sensibly at 320 px wide, then
-// progressively enhances at `sm:` (640), `md:` (768), and `lg:` (1024).
+// Copy is bilingual (English / 中文) via `useLandingLocale`. Default
+// locale is English so first-visit / SEO matches what Google indexes;
+// returning visitors get the locale they last picked from
+// localStorage. Positioning leans on Chinese-origin signalling
+// (footer line, language order in the toggle) per product intent.
 // ============================================================================
 
-const FEATURES = [
-  {
-    icon: '🎙',
-    title: 'Live audio rooms',
-    body: 'Drop into a voice room, take a seat, and talk in real time with hosts and friends. No video pressure — just voice.',
-  },
-  {
-    icon: '🎁',
-    title: 'Send and receive gifts',
-    body: 'Animated gifts that pop on screen, frames that follow you around, and a wall that shows off what you have received.',
-  },
-  {
-    icon: '✦',
-    title: 'Families and SVIP',
-    body: 'Join a family, climb the SVIP ladder, and unlock cosmetic perks: room themes, vehicles, mic effects, badges.',
-  },
-  {
-    icon: '💬',
-    title: 'Direct chat',
-    body: 'One-tap private threads with anyone you meet in a room. Real-time, with full media support.',
-  },
-  {
-    icon: '🛡',
-    title: 'Safe and moderated',
-    body: 'Block and report anyone in a tap. Built-in word filter on every room chat. 18+ age gate enforced.',
-  },
-  {
-    icon: '🌍',
-    title: 'Made for everyone',
-    body: 'English and Bengali in the app today; more languages coming. Optimised for mid-range Android phones.',
-  },
-];
-
 export default function LandingPage() {
+  const { locale, setLocale, t } = useLandingLocale();
+
   // Auth-aware staff CTA — only matters for admins who have signed in
   // before. Consumers will never see the "Open console" wording.
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -62,14 +36,14 @@ export default function LandingPage() {
   }, []);
 
   const staffHref = signedIn ? '/dashboard' : '/login';
-  const staffLabel = signedIn ? 'Open console' : 'Staff sign in';
+  const staffLabel = signedIn ? t.footerStaffSignedIn : t.footerStaffSignedOut;
+
+  const features = buildFeatures(t);
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* ===================================================================
-          Header — brand left, primary nav right. On phones we drop the
-          Download / Features text links to keep the bar uncluttered;
-          the staff link stays so admins can always reach login. */}
+          Header — brand left, locale toggle + Features + Download right. */}
       <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
@@ -87,16 +61,13 @@ export default function LandingPage() {
             </span>
           </Link>
 
-          {/* Staff sign-in deliberately omitted from the header —
-              it lives in the footer's Company column for admins who
-              know to look there. Keeps the public-facing surface
-              focused on the consumer download CTA. */}
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <LocaleToggle locale={locale} onChange={setLocale} />
             <a
               href="#features"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="hidden text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline"
             >
-              Features
+              {t.navFeatures}
             </a>
             <a
               href={LEGAL_INFO.playStoreUrl}
@@ -104,16 +75,14 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-medium text-white shadow-soft transition hover:bg-brand-800 sm:px-4 sm:py-2 sm:text-sm"
             >
-              Download
+              {t.navDownload}
             </a>
           </div>
         </div>
       </header>
 
       {/* ===================================================================
-          Hero — consumer-first. The Play Store badge is the primary CTA.
-          Phone mockup only shows ≥ lg; below that the text stack is
-          full-width centred so the badge stays above the fold on phones. */}
+          Hero — consumer-first. Play Store badge is the primary CTA. */}
       <section className="relative overflow-hidden">
         <div
           className="pointer-events-none absolute inset-0 bg-mesh-gradient opacity-70"
@@ -127,18 +96,16 @@ export default function LandingPage() {
                   className="h-1.5 w-1.5 rounded-full bg-brand-600"
                   aria-hidden
                 />
-                Now on Google Play
+                {t.heroEyebrow}
               </div>
               <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Live the party.{' '}
+                {t.heroTitleA}{' '}
                 <span className="bg-brand-gradient bg-clip-text text-transparent">
-                  Anywhere.
+                  {t.heroTitleB}
                 </span>
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
-                Zimo Live is a live audio social app — voice rooms, gifts,
-                families, and real-time chat. Join hosts from your country
-                or jump into a room halfway across the world.
+                {t.heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-3 lg:items-start lg:justify-start">
@@ -148,39 +115,35 @@ export default function LandingPage() {
                 ) : (
                   <div className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs text-slate-500">
                     <AppleIcon className="h-5 w-5" />
-                    <span>iOS coming soon</span>
+                    <span>{t.iosComingSoon}</span>
                   </div>
                 )}
               </div>
-              <p className="mt-4 text-xs text-slate-500">
-                Free to download · 18+ · No ads
-              </p>
+              <p className="mt-4 text-xs text-slate-500">{t.heroFootnote}</p>
             </div>
 
             <div className="hidden justify-center lg:flex">
-              <PhoneMockup />
+              <PhoneMockup tagline={`${t.heroTitleA} ${t.heroTitleB}`} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ===================================================================
-          Features — describe what's inside the *mobile app*, not the
-          admin console. 1 col on phones, 2 on tablets, 3 on desktop. */}
+          Features grid. */}
       <section id="features" className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              What you can do
+              {t.featuresHeading}
             </h2>
             <p className="mt-3 text-sm text-slate-600 sm:text-base">
-              Designed for fast triage on the phone and quick moves between
-              rooms. Everything below is in the app today.
+              {t.featuresSubhead}
             </p>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {FEATURES.map((f) => (
+            {features.map((f) => (
               <div
                 key={f.title}
                 className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-card sm:p-6"
@@ -201,17 +164,17 @@ export default function LandingPage() {
       </section>
 
       {/* ===================================================================
-          Bottom CTA — final consumer prompt before the footer. */}
+          Bottom CTA. */}
       <section
         id="get-the-app"
         className="border-t border-slate-200 bg-slate-950"
       >
         <div className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-20">
           <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Ready to drop in?
+            {t.ctaHeading}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400 sm:text-base">
-            Free on Google Play. Sign-up takes a single Google tap.
+            {t.ctaBody}
           </p>
           <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <GooglePlayBadge href={LEGAL_INFO.playStoreUrl} />
@@ -223,7 +186,9 @@ export default function LandingPage() {
       </section>
 
       {/* ===================================================================
-          Footer — legal + company links + a discreet staff sign-in. */}
+          Footer. Legal pages stay English-only (per landing-i18n.ts note)
+          so the labels coming out of LEGAL_LINKS / COMPANY_LINKS aren't
+          translated. */}
       <footer className="border-t border-slate-200 bg-slate-950 text-slate-300">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4">
@@ -243,8 +208,7 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
-                Live audio rooms, gifts, and community — built for fast,
-                fun social interaction.
+                {t.footerTagline}
               </p>
               <div className="mt-5">
                 <GooglePlayBadge href={LEGAL_INFO.playStoreUrl} compact />
@@ -253,10 +217,10 @@ export default function LandingPage() {
 
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                Legal
+                {t.footerLegal}
               </h4>
               <ul className="mt-4 space-y-3 text-sm">
-                {LEGAL_LINKS.map((link) => (
+                {t.legalLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
@@ -271,10 +235,10 @@ export default function LandingPage() {
 
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                Company
+                {t.footerCompany}
               </h4>
               <ul className="mt-4 space-y-3 text-sm">
-                {COMPANY_LINKS.map((link) => (
+                {t.companyLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
@@ -285,9 +249,6 @@ export default function LandingPage() {
                   </li>
                 ))}
                 <li>
-                  {/* Staff sign-in lives here, deliberately understated.
-                      Admins know to look in the footer; consumers don't
-                      need it surfaced. */}
                   <Link
                     href={staffHref}
                     className="text-slate-500 transition hover:text-slate-300"
@@ -300,11 +261,8 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:text-sm">
-            <span>
-              © {new Date().getFullYear()} Programmer Nexus. All rights
-              reserved.
-            </span>
-            <span>Made in Bangladesh.</span>
+            <span>{t.footerCopyright(new Date().getFullYear())}</span>
+            <span>{t.footerMadeIn}</span>
           </div>
         </div>
       </footer>
@@ -313,19 +271,73 @@ export default function LandingPage() {
 }
 
 // ============================================================================
+// Locale toggle
+// ============================================================================
+
+/**
+ * EN | 中文 segmented control. Compact enough to live next to the
+ * Download CTA on phones without crowding the header. Chinese sits in
+ * the second slot but is the visually heavier glyph, which keeps the
+ * bilingual signal readable at a glance.
+ */
+function LocaleToggle({
+  locale,
+  onChange,
+}: {
+  locale: Locale;
+  onChange: (l: Locale) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className="inline-flex items-center rounded-full border border-slate-200 bg-white/70 p-0.5 text-xs shadow-soft backdrop-blur"
+    >
+      {LANDING_LOCALES.map((l) => {
+        const active = l.code === locale;
+        return (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => onChange(l.code)}
+            aria-pressed={active}
+            className={`rounded-full px-2.5 py-1 font-medium transition ${
+              active
+                ? 'bg-brand-700 text-white shadow-soft'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            {l.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================================
+// Features helper
+// ============================================================================
+
+function buildFeatures(t: LandingStrings) {
+  return [
+    { icon: '🎙', title: t.feature1Title, body: t.feature1Body },
+    { icon: '🎁', title: t.feature2Title, body: t.feature2Body },
+    { icon: '✦', title: t.feature3Title, body: t.feature3Body },
+    { icon: '💬', title: t.feature4Title, body: t.feature4Body },
+    { icon: '🛡', title: t.feature5Title, body: t.feature5Body },
+    { icon: '🌍', title: t.feature6Title, body: t.feature6Body },
+  ];
+}
+
+// ============================================================================
 // Store badges + mockup
 // ============================================================================
 
 /**
- * Custom-styled "Get it on Google Play" button. Mirrors the visual
- * weight of Google's official badge (dark pill, "GET IT ON" eyebrow,
- * "Google Play" wordmark, triangular play icon in brand colours) but
- * implemented as native HTML so it scales crisply at any size.
- *
- * Google's badge-usage policy allows custom CTAs that don't claim
- * official-badge styling; this is the standard pattern.
- *
- * `compact` halves the width for footer placements.
+ * Custom-styled "Get it on Google Play" button. Native HTML so it
+ * scales crisply at any size. `compact` halves the width for footer
+ * placements.
  */
 function GooglePlayBadge({
   href,
@@ -404,10 +416,6 @@ function GooglePlayBadge({
   );
 }
 
-/**
- * Apple App Store equivalent — only renders when [LEGAL_INFO.appStoreUrl]
- * is set, so we don't ship a dead link before iOS launches.
- */
 function AppStoreBadge({ href }: { href: string }) {
   return (
     <a
@@ -445,10 +453,9 @@ function AppleIcon({ className = 'h-5 w-5' }: { className?: string }) {
 
 /**
  * Pure-CSS phone silhouette with the logo on a brand-coloured glow.
- * Replaces a screenshot asset; any brand refresh is a CSS edit.
- * Hidden below `lg` so the section stays compact on phones / tablets.
+ * Tagline is fed by the active locale so the mockup stays in sync.
  */
-function PhoneMockup() {
+function PhoneMockup({ tagline }: { tagline: string }) {
   return (
     <div className="relative">
       <div
@@ -473,9 +480,7 @@ function PhoneMockup() {
             </div>
             <div className="mt-5 text-center">
               <div className="text-xl font-bold text-white">Zimo Live</div>
-              <div className="mt-1 text-xs text-slate-400">
-                Live the party. Anywhere.
-              </div>
+              <div className="mt-1 text-xs text-slate-400">{tagline}</div>
             </div>
             <div className="mt-8 flex gap-2">
               <span
