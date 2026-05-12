@@ -58,7 +58,14 @@ export default function AgenciesPage() {
       <PageHeader
         title="Agencies"
         subtitle="Business partners that contract with hosts. Each agency has its own admin owner and host roster."
-        actions={canCreate && <Button href="/agencies/new">+ New Agency</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" href="/agencies/create-requests">
+              Review requests
+            </Button>
+            {canCreate && <Button href="/agencies/new">+ New Agency</Button>}
+          </div>
+        }
       />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
