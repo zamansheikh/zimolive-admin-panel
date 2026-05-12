@@ -41,6 +41,23 @@ interface AgencyMember {
   userId?: AppUser | string | null;
 }
 
+type AgencyJoinRequestStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled';
+
+interface AgencyJoinRequest {
+  id: string;
+  agencyId: string;
+  status: AgencyJoinRequestStatus;
+  message: string;
+  createdAt: string;
+  decisionNote: string;
+  decidedAt?: string | null;
+  userId?: AppUser | string | null;
+}
+
 export default function AgencyDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -83,10 +100,23 @@ export default function AgencyDetailPage() {
     { removeAfter?: string } | null
   >(null);
 
+  // Join-request review queue for this agency. Status filter mirrors
+  // the create-requests page — defaults to pending so the operator
+  // lands on actionable work.
+  const [joinRequests, setJoinRequests] =
+    useState<PaginatedList<AgencyJoinRequest> | null>(null);
+  const [joinRequestStatus, setJoinRequestStatus] = useState<
+    AgencyJoinRequestStatus | ''
+  >('pending');
+  const [joinNotes, setJoinNotes] = useState<Record<string, string>>({});
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, h, m] = await Promise.all([
+      const statusQuery = joinRequestStatus
+        ? `&status=${joinRequestStatus}`
+        : '';
+      const [a, h, m, jr] = await Promise.all([
         api<{ agency: Agency }>(`/admin/agencies/${id}`),
         api<PaginatedList<AppUser>>(
           `/admin/agencies/${id}/hosts?page=${hostsPage}&limit=10`,
@@ -94,16 +124,20 @@ export default function AgencyDetailPage() {
         api<PaginatedList<AgencyMember>>(
           `/admin/agencies/${id}/members?page=1&limit=50`,
         ),
+        api<PaginatedList<AgencyJoinRequest>>(
+          `/admin/agencies/${id}/join-requests?page=1&limit=50${statusQuery}`,
+        ),
       ]);
       setAgency(a.agency);
       setHosts(h);
       setMembers(m);
+      setJoinRequests(jr);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [id, hostsPage]);
+  }, [id, hostsPage, joinRequestStatus]);
 
   useEffect(() => {
     load();
@@ -241,6 +275,33 @@ export default function AgencyDetailPage() {
       if (e?.code === 'CANNOT_REMOVE_LONE_OWNER') {
         setTransferTarget({ removeAfter: userId });
       }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function decideJoinRequest(
+    reqId: string,
+    decision: 'approve' | 'reject',
+  ) {
+    setBusy(`${decision}-join-${reqId}`);
+    setError(null);
+    try {
+      await api(
+        `/admin/agencies/${id}/join-requests/${reqId}/${decision}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ note: joinNotes[reqId] ?? '' }),
+        },
+      );
+      setJoinNotes((prev) => {
+        const next = { ...prev };
+        delete next[reqId];
+        return next;
+      });
+      await load();
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setBusy(null);
     }
@@ -680,6 +741,170 @@ export default function AgencyDetailPage() {
           )}
         </div>
       )}
+
+      {/* ─── Agency-join requests (review queue) ─── */}
+      <div className="mt-6">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Join requests
+            </h2>
+            <p className="text-xs text-slate-500">
+              App users who applied to join this agency. Approving creates
+              the member row and auto-promotes the user to host. Rejected
+              applicants can re-apply.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Status
+            </span>
+            <Select
+              value={joinRequestStatus}
+              onChange={(e) =>
+                setJoinRequestStatus(
+                  e.target.value as AgencyJoinRequestStatus | '',
+                )
+              }
+              className="w-36"
+            >
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="">All</option>
+            </Select>
+          </div>
+        </div>
+
+        {!joinRequests || joinRequests.items.length === 0 ? (
+          <EmptyState
+            message={
+              joinRequestStatus === 'pending'
+                ? 'No pending join requests for this agency.'
+                : 'No join requests with that status.'
+            }
+          />
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <Th>Applicant</Th>
+                <Th>Message</Th>
+                <Th>Submitted</Th>
+                {canManage && joinRequestStatus === 'pending' ? (
+                  <Th>Actions</Th>
+                ) : (
+                  <Th>Status</Th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {joinRequests.items.map((r) => {
+                const u =
+                  typeof r.userId === 'object' && r.userId
+                    ? (r.userId as AppUser)
+                    : null;
+                const isPending = r.status === 'pending';
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <Td>
+                      {u ? (
+                        <Link href={`/users/${u.id}`} className="block">
+                          <div className="font-medium text-slate-900">
+                            {u.displayName || u.username || '—'}
+                          </div>
+                          <code className="text-xs text-slate-500">
+                            ID {u.numericId ?? '—'} · @
+                            {u.username || '—'}
+                          </code>
+                        </Link>
+                      ) : (
+                        <code className="text-xs text-slate-500">
+                          {typeof r.userId === 'string' ? r.userId : '—'}
+                        </code>
+                      )}
+                    </Td>
+                    <Td>
+                      {r.message ? (
+                        <div className="max-w-md whitespace-pre-wrap text-xs text-slate-600">
+                          {r.message}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </Td>
+                    <Td className="text-xs text-slate-500">
+                      {new Date(r.createdAt).toLocaleString()}
+                    </Td>
+                    {canManage && isPending ? (
+                      <Td>
+                        <div className="flex flex-col gap-2">
+                          <Textarea
+                            rows={2}
+                            placeholder="Note for the applicant (optional)"
+                            className="w-64 text-xs"
+                            value={joinNotes[r.id] ?? ''}
+                            onChange={(e) =>
+                              setJoinNotes((prev) => ({
+                                ...prev,
+                                [r.id]: e.target.value,
+                              }))
+                            }
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              disabled={busy === `approve-join-${r.id}`}
+                              onClick={() =>
+                                decideJoinRequest(r.id, 'approve')
+                              }
+                            >
+                              {busy === `approve-join-${r.id}`
+                                ? 'Approving…'
+                                : 'Approve'}
+                            </Button>
+                            <Button
+                              variant="danger"
+                              disabled={busy === `reject-join-${r.id}`}
+                              onClick={() =>
+                                decideJoinRequest(r.id, 'reject')
+                              }
+                            >
+                              {busy === `reject-join-${r.id}`
+                                ? 'Rejecting…'
+                                : 'Reject'}
+                            </Button>
+                          </div>
+                        </div>
+                      </Td>
+                    ) : (
+                      <Td>
+                        {r.status === 'approved' && (
+                          <Badge tone="green">Approved</Badge>
+                        )}
+                        {r.status === 'rejected' && (
+                          <Badge tone="red">Rejected</Badge>
+                        )}
+                        {r.status === 'cancelled' && (
+                          <Badge tone="amber">Cancelled</Badge>
+                        )}
+                        {r.status === 'pending' && (
+                          <Badge tone="amber">Pending</Badge>
+                        )}
+                        {r.decisionNote && (
+                          <div className="mt-1 max-w-xs text-xs text-slate-500">
+                            “{r.decisionNote}”
+                          </div>
+                        )}
+                      </Td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        )}
+      </div>
 
       {/* ─── Hosts assigned to this agency ─── */}
       <div className="mt-6">
