@@ -314,6 +314,13 @@ export interface AppConfig {
   emailLoginEnabled: boolean;
   /** Whether the mobile login page exposes the phone-OTP form. */
   phoneLoginEnabled: boolean;
+  /**
+   * When true, the backend rejects audio + video room creates from
+   * users without `isHost === true`. The path to becoming a host is
+   * either admin promotion or joining an agency (which auto-promotes).
+   * When false (the default), anyone can go live.
+   */
+  liveRequiresAgency: boolean;
   createdAt: string;
   updatedAt: string;
 }

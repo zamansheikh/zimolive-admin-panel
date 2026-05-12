@@ -45,7 +45,8 @@ export default function SettingsPage() {
       | 'familiesEnabled'
       | 'agenciesEnabled'
       | 'emailLoginEnabled'
-      | 'phoneLoginEnabled',
+      | 'phoneLoginEnabled'
+      | 'liveRequiresAgency',
   ) {
     if (!config || !canManage) return;
     const next = !config[key];
@@ -113,6 +114,22 @@ export default function SettingsPage() {
             checked={config.agenciesEnabled}
             disabled={!canManage || saving === 'agenciesEnabled'}
             onToggle={() => toggle('agenciesEnabled')}
+          />
+
+          <ToggleCard
+            title="Live requires agency"
+            body={
+              <>
+                When on, only users with <code>isHost === true</code> can open
+                audio / video rooms. The path to becoming a host is either an
+                admin promoting them on the user record, or them joining an
+                agency (joining auto-promotes). Active rooms aren't torn down
+                — this only gates new room creates and re-opens.
+              </>
+            }
+            checked={config.liveRequiresAgency}
+            disabled={!canManage || saving === 'liveRequiresAgency'}
+            onToggle={() => toggle('liveRequiresAgency')}
           />
 
           <div className="pt-4">
