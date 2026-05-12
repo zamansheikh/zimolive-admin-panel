@@ -81,6 +81,10 @@ export interface AppUser {
   isHost: boolean;
   hostProfile?: HostProfile | null;
   linkedAdminId?: string | null;
+  /** Agency-management powers granted by a platform admin. Drives the
+   *  mobile app's "Management" section visibility. Known values:
+   *  `agency.create`, `agency.manage`. */
+  agencyPowers?: string[];
   createdAt: string;
   updatedAt: string;
 }

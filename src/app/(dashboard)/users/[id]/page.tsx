@@ -19,6 +19,7 @@ export default function UserDetailPage() {
   const canBan = hasPermission(permissions, 'users.ban');
   const canHost = hasPermission(permissions, 'hosts.approve');
   const canPromote = hasPermission(permissions, 'admin.create') && hasPermission(permissions, 'users.edit');
+  const canGrantAgencyPowers = hasPermission(permissions, 'agency.manage');
 
   const [user, setUser] = useState<AppUser | null>(null);
   const [roles, setRoles] = useState<AdminRole[]>([]);
@@ -221,6 +222,30 @@ export default function UserDetailPage() {
           </Card>
         )}
 
+        {canGrantAgencyPowers && (
+          <Card className="md:col-span-2">
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">Agency powers</h3>
+            <p className="mb-3 text-xs text-slate-500">
+              Grant this user the ability to manage agencies from the mobile app.
+              When non-empty, the "Management" section appears on their profile in
+              the app. <code>agency.create</code> lets them found a new agency;
+              <code> agency.manage</code> is a super-power that can moderate any agency.
+            </p>
+            <AgencyPowersForm
+              initial={user.agencyPowers ?? []}
+              busy={busy === 'agency-powers'}
+              onSave={async (powers) =>
+                run('agency-powers', () =>
+                  api(`/admin/app-users/${user.id}/agency-powers`, {
+                    method: 'POST',
+                    body: JSON.stringify({ powers }),
+                  }),
+                )
+              }
+            />
+          </Card>
+        )}
+
         {user.linkedAdminId && (
           <Card className="md:col-span-2">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">Linked admin account</h3>
@@ -257,6 +282,82 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex justify-between gap-2">
       <dt className="text-slate-500">{label}</dt>
       <dd className="max-w-[60%] truncate font-medium text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Two checkboxes for the supported agency powers. Local state is the
+ * desired final list; clicking Save POSTs it to `/agency-powers` and
+ * the parent refreshes the user record.
+ */
+function AgencyPowersForm({
+  initial,
+  busy,
+  onSave,
+}: {
+  initial: string[];
+  busy: boolean;
+  onSave: (powers: string[]) => Promise<void>;
+}) {
+  const [canCreate, setCanCreate] = useState(initial.includes('agency.create'));
+  const [canManage, setCanManage] = useState(initial.includes('agency.manage'));
+
+  // If the parent's `initial` changes (e.g. after a save reloads), sync.
+  useEffect(() => {
+    setCanCreate(initial.includes('agency.create'));
+    setCanManage(initial.includes('agency.manage'));
+  }, [initial]);
+
+  const dirty =
+    canCreate !== initial.includes('agency.create') ||
+    canManage !== initial.includes('agency.manage');
+
+  return (
+    <div className="space-y-3">
+      <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          checked={canCreate}
+          onChange={(e) => setCanCreate(e.target.checked)}
+        />
+        <div>
+          <div className="font-semibold text-slate-900">agency.create</div>
+          <div className="text-xs text-slate-500">
+            Can found a new agency from the mobile app. They become its owner.
+          </div>
+        </div>
+      </label>
+      <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          checked={canManage}
+          onChange={(e) => setCanManage(e.target.checked)}
+        />
+        <div>
+          <div className="font-semibold text-slate-900">agency.manage</div>
+          <div className="text-xs text-slate-500">
+            Super-power: moderate any agency in the app — approve requests,
+            kick members, view the roster + ranking — even without being its
+            owner. Use sparingly.
+          </div>
+        </div>
+      </label>
+      <div className="flex justify-end">
+        <Button
+          disabled={!dirty || busy}
+          onClick={() =>
+            onSave([
+              ...(canCreate ? ['agency.create'] : []),
+              ...(canManage ? ['agency.manage'] : []),
+            ])
+          }
+        >
+          {busy ? 'Saving…' : 'Save powers'}
+        </Button>
+      </div>
     </div>
   );
 }
