@@ -75,6 +75,14 @@ export default function AgencyDetailPage() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<EditDraft>(_emptyDraft());
 
+  // Transfer-ownership modal state. Set to `{}` for a plain transfer,
+  // or `{ removeAfter: userId }` when the operator hit the lone-owner
+  // error trying to remove someone — the modal will run a follow-up
+  // delete once ownership transfers cleanly.
+  const [transferTarget, setTransferTarget] = useState<
+    { removeAfter?: string } | null
+  >(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -224,6 +232,38 @@ export default function AgencyDetailPage() {
       await api(`/admin/agencies/${id}/members/${userId}`, {
         method: 'DELETE',
       });
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+      // The backend blocks removal of a lone owner — open the transfer
+      // modal so the operator can pick a successor instead of bouncing
+      // off the error.
+      if (e?.code === 'CANNOT_REMOVE_LONE_OWNER') {
+        setTransferTarget({ removeAfter: userId });
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function transferOwnership(newOwnerUserId: string) {
+    setBusy('transfer-' + newOwnerUserId);
+    setError(null);
+    try {
+      await api(`/admin/agencies/${id}/transfer-ownership`, {
+        method: 'POST',
+        body: JSON.stringify({ newOwnerUserId }),
+      });
+      // If this transfer was kicked off because the operator tried to
+      // remove the previous owner, finish that flow now that the
+      // ownership has moved.
+      const pendingRemove = transferTarget?.removeAfter;
+      setTransferTarget(null);
+      if (pendingRemove) {
+        await api(`/admin/agencies/${id}/members/${pendingRemove}`, {
+          method: 'DELETE',
+        });
+      }
       await load();
     } catch (e: any) {
       setError(e.message);
@@ -600,16 +640,36 @@ export default function AgencyDetailPage() {
                         {m.diamondsContributed.toLocaleString()}
                       </Td>
                       <Td>
-                        {u && (
-                          <button
-                            onClick={() => removeMember(u.id)}
-                            disabled={busy === 'remove-member-' + u.id}
-                            className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                          >
-                            {busy === 'remove-member-' + u.id
-                              ? 'Removing…'
-                              : 'Remove'}
-                          </button>
+                        {u && canManage && (
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            {m.role === 'owner' ? (
+                              <button
+                                onClick={() => setTransferTarget({})}
+                                className="text-brand hover:underline"
+                              >
+                                Transfer ownership →
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => transferOwnership(u.id)}
+                                disabled={busy === 'transfer-' + u.id}
+                                className="text-brand hover:underline disabled:opacity-50"
+                              >
+                                {busy === 'transfer-' + u.id
+                                  ? 'Promoting…'
+                                  : 'Make owner'}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => removeMember(u.id)}
+                              disabled={busy === 'remove-member-' + u.id}
+                              className="text-red-600 hover:underline disabled:opacity-50"
+                            >
+                              {busy === 'remove-member-' + u.id
+                                ? 'Removing…'
+                                : 'Remove'}
+                            </button>
+                          </div>
                         )}
                       </Td>
                     </tr>
@@ -747,6 +807,100 @@ export default function AgencyDetailPage() {
             />
           </>
         )}
+      </div>
+
+      {transferTarget && members && (
+        <TransferOwnershipModal
+          members={members.items}
+          removingAfter={transferTarget.removeAfter}
+          busy={busy}
+          onCancel={() => setTransferTarget(null)}
+          onConfirm={(userId) => transferOwnership(userId)}
+        />
+      )}
+    </div>
+  );
+}
+
+function TransferOwnershipModal({
+  members,
+  removingAfter,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  members: AgencyMember[];
+  removingAfter?: string;
+  busy: string | null;
+  onCancel: () => void;
+  onConfirm: (userId: string) => void;
+}) {
+  // Eligible new owners: every member who isn't the current owner
+  // (and isn't the soon-to-be-removed user, if this was kicked off
+  // by a remove attempt).
+  const candidates = members.filter((m) => {
+    if (m.role === 'owner') return false;
+    const uid = typeof m.userId === 'string' ? m.userId : m.userId?.id;
+    return uid && uid !== removingAfter;
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+        <h3 className="text-base font-semibold text-slate-900">
+          Transfer ownership
+        </h3>
+        <p className="mt-1 text-xs text-slate-500">
+          {removingAfter
+            ? 'The current owner cannot be removed before ownership moves. Pick the new owner — the original owner will then be removed.'
+            : 'The current owner becomes an admin. Pick who takes over.'}
+        </p>
+
+        {candidates.length === 0 ? (
+          <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            No eligible members. Add an admin or member to this agency
+            first, then run the transfer.
+          </div>
+        ) : (
+          <div className="mt-4 max-h-72 space-y-2 overflow-y-auto">
+            {candidates.map((m) => {
+              const u =
+                typeof m.userId === 'object' && m.userId
+                  ? (m.userId as AppUser)
+                  : null;
+              if (!u) return null;
+              const isBusy = busy === 'transfer-' + u.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => onConfirm(u.id)}
+                  disabled={isBusy}
+                  className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-left hover:border-brand disabled:opacity-50"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">
+                      {u.displayName || u.username || '—'}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      ID {u.numericId ?? '—'} ·{' '}
+                      <span className="capitalize">{m.role}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-brand">
+                    {isBusy ? 'Transferring…' : 'Make owner →'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );
