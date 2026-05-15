@@ -75,12 +75,21 @@ export default function FamilyDetailPage() {
 
   /// Status changes use the same admin endpoint with different payloads.
   /// Disband is destructive (detaches every member); freeze just blocks
-  /// new joins; unfreeze restores active.
+  /// new joins; unfreeze restores active. Reactivating a previously
+  /// disbanded family flips the record back to ACTIVE but does NOT
+  /// restore members — those rows were deleted at disband time — so
+  /// we warn before doing it.
   async function setStatus(status: FamilyStatus) {
     if (!family) return;
     if (status === 'disbanded') {
       const ok = confirm(
         `Force-disband "${family.name}"?\n\nAll ${family.memberCount} member(s) will be removed. The family record stays in the database for audit. This cannot be undone.`,
+      );
+      if (!ok) return;
+    }
+    if (status === 'active' && family.status === 'disbanded') {
+      const ok = confirm(
+        `Reactivate "${family.name}"?\n\nThe family will be visible and joinable again, but its previous members were removed when it was disbanded — they will NOT be re-added automatically.`,
       );
       if (!ok) return;
     }
@@ -131,8 +140,18 @@ export default function FamilyDetailPage() {
               </>
             )}
             {canManage && family.status === 'frozen' && (
+              <>
+                <Button variant="primary" onClick={() => setStatus('active')}>
+                  Unfreeze
+                </Button>
+                <Button variant="danger" onClick={() => setStatus('disbanded')}>
+                  Force disband
+                </Button>
+              </>
+            )}
+            {canManage && family.status === 'disbanded' && (
               <Button variant="primary" onClick={() => setStatus('active')}>
-                Unfreeze
+                Reactivate
               </Button>
             )}
           </>
