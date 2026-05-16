@@ -321,6 +321,14 @@ export interface AppConfig {
    * When false (the default), anyone can go live.
    */
   liveRequiresAgency: boolean;
+  /**
+   * When true, an audio room becomes session-scoped to its host:
+   * leaving (or losing the heartbeat past the grace window) closes
+   * the room and evicts every viewer — same behaviour video rooms
+   * always have. When false (the default), audio rooms remain a
+   * persistent venue that survives the host stepping away.
+   */
+  audioHostEndsLive: boolean;
   createdAt: string;
   updatedAt: string;
 }

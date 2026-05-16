@@ -46,7 +46,8 @@ export default function SettingsPage() {
       | 'agenciesEnabled'
       | 'emailLoginEnabled'
       | 'phoneLoginEnabled'
-      | 'liveRequiresAgency',
+      | 'liveRequiresAgency'
+      | 'audioHostEndsLive',
   ) {
     if (!config || !canManage) return;
     const next = !config[key];
@@ -130,6 +131,23 @@ export default function SettingsPage() {
             checked={config.liveRequiresAgency}
             disabled={!canManage || saving === 'liveRequiresAgency'}
             onToggle={() => toggle('liveRequiresAgency')}
+          />
+
+          <ToggleCard
+            title="Audio host ends the live"
+            body={
+              <>
+                When on, an audio room becomes session-scoped to its host —
+                the host leaving (or losing their heartbeat for ~2 minutes)
+                closes the room and kicks every viewer with a "host ended
+                the live" toast, same as video rooms. When off (the
+                default), audio rooms remain a persistent venue: viewers
+                stay inside even when the host steps away.
+              </>
+            }
+            checked={config.audioHostEndsLive}
+            disabled={!canManage || saving === 'audioHostEndsLive'}
+            onToggle={() => toggle('audioHostEndsLive')}
           />
 
           <div className="pt-4">
