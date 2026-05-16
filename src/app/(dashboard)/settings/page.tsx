@@ -69,6 +69,33 @@ export default function SettingsPage() {
     }
   }
 
+  /// Generic save for the numeric / select fields under the
+  /// live-record section. Same optimistic + revert shape as
+  /// `toggle`, but typed for arbitrary key/value pairs so the
+  /// caller can ship a partial PATCH from an input commit.
+  async function saveField<K extends keyof AppConfig>(
+    key: K,
+    value: AppConfig[K],
+  ) {
+    if (!config || !canManage) return;
+    const prev = config[key];
+    setConfig({ ...config, [key]: value });
+    setSaving(key as string);
+    setError(null);
+    try {
+      const res = await api<{ config: AppConfig }>('/admin/system-config', {
+        method: 'PATCH',
+        body: JSON.stringify({ [key]: value }),
+      });
+      setConfig(res.config);
+    } catch (e: any) {
+      setConfig({ ...config, [key]: prev }); // revert
+      setError(e.message);
+    } finally {
+      setSaving(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
@@ -152,6 +179,103 @@ export default function SettingsPage() {
 
           <div className="pt-4">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Host live-record rewards
+            </h2>
+            <p className="mb-4 text-sm text-slate-600">
+              Daily + monthly rewards that pay hosts for sustained live time.
+              A "valid day" is any calendar day the host crossed the daily
+              minute threshold on EITHER audio or video (tracked separately).
+              Hit the monthly day threshold and the host can claim the
+              monthly bonus + a PDF certificate from the mobile Live Record
+              page. Set a reward amount to 0 to keep the tracking but
+              disable the wallet credit.
+            </p>
+          </div>
+
+          <NumberCard
+            title="Daily minute threshold"
+            unit="minutes"
+            body={
+              <>
+                Minutes of live in a single day to count as one valid day.
+                Audio + video are tracked separately — 45 min of either
+                kind alone earns it. Server cap: ≥ 1.
+              </>
+            }
+            value={config.liveValidDayMinutes}
+            disabled={!canManage || saving === 'liveValidDayMinutes'}
+            onSave={(v) => saveField('liveValidDayMinutes', v)}
+          />
+
+          <NumberCard
+            title="Monthly valid-day threshold"
+            unit="days"
+            body={
+              <>
+                Valid days the host needs in a calendar month to unlock
+                the monthly bonus + PDF certificate.
+              </>
+            }
+            value={config.liveValidMonthDays}
+            disabled={!canManage || saving === 'liveValidMonthDays'}
+            onSave={(v) => saveField('liveValidMonthDays', v)}
+          />
+
+          <NumberCard
+            title="Daily reward (per valid day)"
+            unit={config.liveValidRewardCurrency}
+            body={
+              <>
+                Credited automatically at Asia/Dhaka midnight for every
+                day the host crossed the threshold. Set to 0 to disable
+                the daily credit while still tracking valid days for the
+                monthly accounting.
+              </>
+            }
+            value={config.liveValidDayReward}
+            disabled={!canManage || saving === 'liveValidDayReward'}
+            onSave={(v) => saveField('liveValidDayReward', v)}
+          />
+
+          <NumberCard
+            title="Monthly bonus (per claim)"
+            unit={config.liveValidRewardCurrency}
+            body={
+              <>
+                One-shot bonus claimed from the mobile Live Record page
+                once the host hits the monthly valid-day threshold. The
+                same claim generates the PDF certificate. Set to 0 to
+                keep the PDF flow but skip the wallet credit.
+              </>
+            }
+            value={config.liveValidMonthBonus}
+            disabled={!canManage || saving === 'liveValidMonthBonus'}
+            onSave={(v) => saveField('liveValidMonthBonus', v)}
+          />
+
+          <SelectCard
+            title="Reward currency"
+            body={
+              <>
+                Currency used for both the daily reward and the monthly
+                bonus. <code>coins</code> is the in-app spending currency;
+                <code>diamonds</code> is the host earning currency
+                redeemable for withdrawals.
+              </>
+            }
+            value={config.liveValidRewardCurrency}
+            options={[
+              { value: 'coins', label: 'Coins' },
+              { value: 'diamonds', label: 'Diamonds' },
+            ]}
+            disabled={!canManage || saving === 'liveValidRewardCurrency'}
+            onChange={(v) =>
+              saveField('liveValidRewardCurrency', v as 'coins' | 'diamonds')
+            }
+          />
+
+          <div className="pt-4">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
               Sign-in methods
             </h2>
             <p className="mb-4 text-sm text-slate-600">
@@ -204,6 +328,110 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/// Number input bound to a numeric AppConfig field. Commits on
+/// blur or Enter — typing doesn't fire a PATCH on every keystroke.
+/// Local state lets the user delete digits without the input snapping
+/// back; on commit, an empty / non-numeric value reverts to the
+/// persisted value rather than persisting NaN.
+function NumberCard({
+  title,
+  body,
+  value,
+  unit,
+  disabled,
+  onSave,
+}: {
+  title: string;
+  body: React.ReactNode;
+  value: number;
+  unit: string;
+  disabled: boolean;
+  onSave: (next: number) => void;
+}) {
+  const [draft, setDraft] = useState<string>(String(value));
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+  function commit() {
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setDraft(String(value));
+      return;
+    }
+    if (parsed === value) return;
+    onSave(parsed);
+  }
+  return (
+    <Card>
+      <div className="flex items-start gap-4">
+        <div className="flex-1">
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{body}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={draft}
+            disabled={disabled}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            className="h-9 w-24 rounded-md border border-slate-300 px-2 text-right text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          <span className="text-xs text-slate-500">{unit}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/// Select bound to a string-enum AppConfig field. Commits on
+/// change — no separate save button (matches the toggles).
+function SelectCard({
+  title,
+  body,
+  value,
+  options,
+  disabled,
+  onChange,
+}: {
+  title: string;
+  body: React.ReactNode;
+  value: string;
+  options: { value: string; label: string }[];
+  disabled: boolean;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <Card>
+      <div className="flex items-start gap-4">
+        <div className="flex-1">
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{body}</p>
+        </div>
+        <select
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-9 rounded-md border border-slate-300 px-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </Card>
   );
 }
 

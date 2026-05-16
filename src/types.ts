@@ -329,6 +329,21 @@ export interface AppConfig {
    * persistent venue that survives the host stepping away.
    */
   audioHostEndsLive: boolean;
+
+  // ---------------- Host live-record rewards ----------------
+
+  /** Minutes of live in a single day to count as one valid day.
+   *  Audio + video tracked separately — 45 min of either earns it. */
+  liveValidDayMinutes: number;
+  /** Valid days needed in a calendar month for the monthly bonus. */
+  liveValidMonthDays: number;
+  /** Daily auto-credit (per valid day). 0 disables. */
+  liveValidDayReward: number;
+  /** Monthly bonus claimed once the host hits the threshold. 0 disables. */
+  liveValidMonthBonus: number;
+  /** Currency used for both the daily reward and the monthly bonus. */
+  liveValidRewardCurrency: 'coins' | 'diamonds';
+
   createdAt: string;
   updatedAt: string;
 }
